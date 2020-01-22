@@ -53,6 +53,10 @@
 #define WCDLI_MAX_CHARS_PER_LINE                 80
 #endif
 
+#if !defined (WCDLI_MAX_CHARS_COMMAND_LINE)
+#define WCDLI_MAX_CHARS_COMMAND_LINE             30
+#endif
+
 #if !defined (WCDLI_DIVIDING_CHAR)
 #define WCDLI_DIVIDING_CHAR                      '*'
 #endif
@@ -66,6 +70,32 @@
 #endif
 
 #define WCDLI_NEW_LINE                           "\r\n"
+
+typedef struct _WCDLI_Command_t
+{
+    char *name;
+    char *description;
+    void *device;
+    WCDLI_CommandCallback_t callback;
+} WCDLI_Command_t;
+
+static void resetBuffer (void);
+static void prompt (void);
+static void sayHello (void);
+static void reboot (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE]);
+static void help (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE]);
+static void save (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE]);
+
+static const WCDLI_Command_t mCommands[] =
+{
+    {"help"   , "Commands list"         , 0, help},
+    {"version", "Project version"       , 0, WCDLI_printProjectVersion},
+    {"status" , "Microcontroller status", 0, WCDLI_printStatus},
+    {"save"   , "Save parameters"       , 0, save},
+    {"reboot" , "Reboot..."             , 0, reboot},
+};
+
+#define WCDLI_COMMANDS_SIZE                      (sizeof(mCommands) / sizeof(mCommands[0]))
 
 static char mPromptString[6] = {0};
 
@@ -126,20 +156,46 @@ static void sayHello (void)
     Uart_sendString(WCDLI_PORT, "\r\n");
 #endif
 
-    WCDLI_printProjectVersion();
+    WCDLI_printProjectVersion(0,0,0);
     WCDLI_PRINT_DIVIDING_LINE();
     Uart_sendString(WCDLI_PORT, "\r\n");
 }
 
-static void reboot (void)
+static void reboot (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE])
 {
 //    sendString("Reboot...\r\n");
     NVIC_SystemReset();
 }
 
-_weak void WCDLI_printProjectVersion (void)
+static void help (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE])
+{
+    uint8_t noBlank = 0;
+    for (uint8_t i = 0; i < WCDLI_COMMANDS_SIZE; ++i)
+    {
+        noBlank = WCDLI_MAX_CHARS_COMMAND_LINE - strlen(mCommands[i].name);
+        Uart_sendString(WCDLI_PORT,mCommands[i].name);
+        for (uint8_t j=0; j < noBlank; ++j)
+        {
+            Uart_putChar(WCDLI_PORT,' ');
+        }
+        Uart_putChar(WCDLI_PORT,':');
+        Uart_sendStringln(WCDLI_PORT,mCommands[i].description);
+    }
+}
+
+static void save (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE])
 {
 
+}
+
+_weak void WCDLI_printProjectVersion (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE])
+{
+
+}
+
+_weak void WCDLI_printStatus (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE])
+{
+    // Intentionally empty
 }
 
 void WCDLI_ckeck (void)
@@ -176,6 +232,7 @@ void WCDLI_init (void)
     mPromptString[strlen(mPromptString)] = WCDLI_PROMPT_CHAR;
     strcat(mPromptString,"> ");
 
+    // Send Hello World!
     sayHello();
     prompt();
 

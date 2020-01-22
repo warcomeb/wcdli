@@ -73,12 +73,51 @@ void WCDLI_init (void);
 /*!
  *
  */
-void WCDLI_printProjectVersion (void);
+void WCDLI_printProjectVersion (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE]);
+
+/*!
+ *
+ */
+void WCDLI_printStatus (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE]);
 
 /*!
  *
  */
 void WCDLI_ckeck (void);
+
+static inline void WCDLI_printString1 (const char* str1)
+{
+    Uart_sendStringln(WCDLI_PORT, str1);
+}
+
+static inline void WCDLI_printString2 (const char* str1, const char* str2)
+{
+    Uart_sendString(WCDLI_PORT, str1);
+    Uart_sendStringln(WCDLI_PORT, str2);
+}
+
+#define WCDLI_PRINT_MESSAGE(LEVELSTRING,MESSAGE) \
+    do {                                         \
+        WCDLI_printString2(LEVELSTRING,MESSAGE); \
+    } while (0)
+
+#if (WCDLI_MESSAGE_LEVEL_INFO <= WCDLI_DEBUG_MESSAGE_LEVEL)
+#define WCDLI_PRINT_INFO_MESSAGE(MESSAGE)        WCDLI_PRINT_MESSAGE("[INF]: ",MESSAGE)
+#else
+#define WCDLI_PRINT_INFO_MESSAGE(MESSAGE)        {asm("NOP");}
+#endif
+
+#if (WCDLI_MESSAGE_LEVEL_WARNING <= WCDLI_DEBUG_MESSAGE_LEVEL)
+#define WCDLI_PRINT_WARNING_MESSAGE(MESSAGE)     WCDLI_PRINT_MESSAGE("[WAR]: ",MESSAGE)
+#else
+#define WCDLI_PRINT_WARNING_MESSAGE(MESSAGE)     {asm("NOP");}
+#endif
+
+#if (WCDLI_MESSAGE_LEVEL_DANGER <= WCDLI_DEBUG_MESSAGE_LEVEL)
+#define WCDLI_PRINT_DANGER_MESSAGE(MESSAGE)      WCDLI_PRINT_MESSAGE("[ERR]: ",MESSAGE)
+#else
+#define WCDLI_PRINT_DANGER_MESSAGE(MESSAGE)      {asm("NOP");}
+#endif
 
 /*!
  * \}

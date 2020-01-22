@@ -64,8 +64,33 @@ typedef enum _WCDLI_Errors
 } WCDLI_Error_t;
 
 /*!
+ * \defgroup WCDLI_Message_Level WCDLI Debug Message Level
+ * \{
+ */
+#define WCDLI_MESSAGE_LEVEL_NONE                 0
+#define WCDLI_MESSAGE_LEVEL_DANGER               1
+#define WCDLI_MESSAGE_LEVEL_WARNING              2
+#define WCDLI_MESSAGE_LEVEL_INFO                 3
+#define WCDLI_MESSAGE_LEVEL_ALL                  4
+/*!
  * \}
  */
 
+#if !defined (WCDLI_BUFFER_SIZE)
+#define WCDLI_BUFFER_SIZE                        80
+#endif
+
+/*!
+ *
+ */
+typedef void (*WCDLI_CommandCallback_t)(void* app, int argc, char argv[][WCDLI_BUFFER_SIZE]);
+
+#if !defined (WCDLI_DEBUG_MESSAGE_LEVEL)
+#define WCDLI_DEBUG_MESSAGE_LEVEL                WCDLI_MESSAGE_LEVEL_ALL
+#endif
+
+/*!
+ * \}
+ */
 
 #endif // __WARCOMEB_WETS_TYPES_H
