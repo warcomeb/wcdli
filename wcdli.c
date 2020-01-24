@@ -57,6 +57,10 @@
 #define WCDLI_MAX_CHARS_COMMAND_LINE             30
 #endif
 
+#if !defined (WCDLI_MAX_PARAMS)
+#define WCDLI_MAX_PARAMS                         10
+#endif
+
 #if !defined (WCDLI_DIVIDING_CHAR)
 #define WCDLI_DIVIDING_CHAR                      '*'
 #endif
@@ -104,6 +108,12 @@ static char mPromptString[6] = {0};
  */
 static char mBuffer[WCDLI_BUFFER_DIMENSION+1] = {0};
 
+static uint32_t mCurrentCommandIndex = 0;
+static char mCurrentCommand[WCDLI_MAX_CHARS_PER_LINE] = {0};
+
+static char mParams[WCDLI_MAX_PARAMS][WCDLI_BUFFER_SIZE];
+static uint8_t mNumberOfParams = 0;
+
 /*!
  *
  */
@@ -114,6 +124,11 @@ static UtilityBuffer_Descriptor mBufferDescriptor;
       uint8_t c = WCDLI_DIVIDING_CHAR;           \
       for (i=0; i<WCDLI_MAX_CHARS_PER_LINE; ++i) \
           Uart_write(WCDLI_PORT,&c,100);         \
+    } while (0)
+
+#define WCDLI_PRINT_NEW_LINE()                     \
+    do {                                           \
+        Uart_sendString(WCDLI_PORT,WCDLI_NEW_LINE);\
     } while (0)
 
 void callbackRx (struct _Uart_Device* dev, void* obj)
@@ -128,7 +143,7 @@ void callbackRx (struct _Uart_Device* dev, void* obj)
 
 static void resetBuffer (void)
 {
-
+    mCurrentCommandIndex = 0;
 }
 
 static void prompt (void)
@@ -163,7 +178,6 @@ static void sayHello (void)
 
 static void reboot (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE])
 {
-//    sendString("Reboot...\r\n");
     NVIC_SystemReset();
 }
 
@@ -185,6 +199,28 @@ static void help (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE])
 
 static void save (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE])
 {
+    // TODO
+}
+
+static void parseCommand (WCDLI_Command_t* command)
+{
+    for (uint8_t i = 0; i < WCDLI_COMMANDS_SIZE; i++)
+    {
+        if (strncmp(mCurrentCommand, mCommands[i].name, strlen(mCommands[i].name)) == 0)
+        {
+            command->name        = mCommands[i].name;
+            command->description = mCommands[i].description;
+            command->callback    = mCommands[i].callback;
+            command->device      = mCommands[i].device;
+            return;
+        }
+    }
+
+    command->name = NULL;
+}
+
+static void parseParams (void)
+{
 
 }
 
@@ -200,7 +236,63 @@ _weak void WCDLI_printStatus (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE
 
 void WCDLI_ckeck (void)
 {
+    char c = '\0';
+    WCDLI_Command_t command = {0};
 
+    while (!UtilityBuffer_isEmpty(&mBufferDescriptor))
+    {
+        UtilityBuffer_pull(&mBufferDescriptor,&c);
+
+        // Use the back space for delete char
+        if ((c == '\b') && (mCurrentCommandIndex > 0))
+        {
+            mCurrentCommandIndex--;
+            continue;
+        }
+
+        if ((c == '\b') && (mCurrentCommandIndex == 0))
+        {
+            continue;
+        }
+
+        mCurrentCommand[mCurrentCommandIndex] = c;
+
+        if ((mCurrentCommandIndex != 0) &&
+            (mCurrentCommand[mCurrentCommandIndex-2] == '\r') &&
+            (mCurrentCommand[mCurrentCommandIndex-1] == '\n'))
+        {
+            // parse command
+
+            // No message, only enter command!
+            if (mCurrentCommandIndex == 2)
+            {
+                prompt();
+                return;
+            }
+
+            WCDLI_PRINT_NEW_LINE();
+            parseCommand(&command);
+
+            if (command.name != NULL)
+            {
+                // Parse params
+                parseParams();
+                command.callback(command.device,mNumberOfParams,mParams);
+            }
+            else
+            {
+                // Command not found!
+                WCDLI_PRINT_DANGER_MESSAGE("Command not found!");
+            }
+
+            prompt();
+            break;
+        }
+        else
+        {
+            continue;
+        }
+    }
 }
 
 void WCDLI_init (void)
