@@ -156,9 +156,9 @@ static void sayHello (void)
 {
     uint8_t i = 0;
 
-    Uart_sendString(WCDLI_PORT, "\r\n");
+    WCDLI_PRINT_NEW_LINE();
     WCDLI_PRINT_DIVIDING_LINE();
-    Uart_sendString(WCDLI_PORT, "\r\n");
+    WCDLI_PRINT_NEW_LINE();
 
 #if (defined (PROJECT_NAME) || defined (PROJECT_COPYRIGTH))
 #if defined (PROJECT_NAME)
@@ -168,12 +168,12 @@ static void sayHello (void)
     Uart_sendStringln(WCDLI_PORT, PROJECT_COPYRIGTH);
 #endif
     WCDLI_PRINT_DIVIDING_LINE();
-    Uart_sendString(WCDLI_PORT, "\r\n");
+    WCDLI_PRINT_NEW_LINE();
 #endif
 
     WCDLI_printProjectVersion(0,0,0);
     WCDLI_PRINT_DIVIDING_LINE();
-    Uart_sendString(WCDLI_PORT, "\r\n");
+    WCDLI_PRINT_NEW_LINE();
 }
 
 static void reboot (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE])
@@ -221,7 +221,51 @@ static void parseCommand (WCDLI_Command_t* command)
 
 static void parseParams (void)
 {
+    // Buffer counter
+    uint8_t i = 0;
+    // Counter for each parameter
+    uint8_t j = 0;
+    // to know if double quote is for open or close
+    bool isStringOpen = FALSE;
 
+    mNumberOfParams = 0;
+
+    for (i = 0; i < (mCurrentCommandIndex -2); ++i)
+    {
+        if ((mCurrentCommand[i] != ' ') && (mCurrentCommand[i] != '\"'))
+        {
+            mParams[mNumberOfParams][j++] = mCurrentCommand[i];
+        }
+        else if ((mCurrentCommand[i] == '\"') && (isStringOpen == FALSE))
+        {
+            isStringOpen = TRUE;
+        }
+        else if ((mCurrentCommand[i] == '\"') && (isStringOpen == TRUE))
+        {
+            isStringOpen = FALSE;
+            mParams[mNumberOfParams][j] = '\0';
+            // The string parameter is at the end, reset the counter
+            j = 0;
+            // Increase the parameter number
+            mNumberOfParams++;
+        }
+        else if ((mCurrentCommand[i] == ' ') && (isStringOpen == TRUE))
+        {
+            mParams[mNumberOfParams][j++] = mCurrentCommand[i];
+        }
+        else if (((mCurrentCommand[i] == ' ') && (mCurrentCommand[i-1] == ' ')) ||
+                 ((mCurrentCommand[i] == ' ') && (mCurrentCommand[i-1] == '\"')))
+        {
+            continue;
+        }
+        else
+        {
+            mParams[mNumberOfParams][j] = '\0';
+            j = 0;
+            mNumberOfParams++;
+        }
+    }
+    mNumberOfParams++;
 }
 
 _weak void WCDLI_printProjectVersion (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE])
