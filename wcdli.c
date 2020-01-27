@@ -26,6 +26,8 @@
 
 #include "wcdli.h"
 
+#include <stdlib.h>
+
 #if !defined (LIBOHIBOARD_UART)
 #error "WCDLI: You must enable UART peripheral."
 #endif
@@ -90,13 +92,22 @@ static void reboot (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE]);
 static void help (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE]);
 static void save (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE]);
 
+#if defined (LIBOHIBOARD_RTC)
+static void setTime (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE]);
+static void getTime (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE]);
+#endif
+
 static const WCDLI_Command_t mCommands[] =
 {
-    {"help"   , "Commands list"         , 0, help},
-    {"version", "Project version"       , 0, WCDLI_printProjectVersion},
-    {"status" , "Microcontroller status", 0, WCDLI_printStatus},
-    {"save"   , "Save parameters"       , 0, save},
-    {"reboot" , "Reboot..."             , 0, reboot},
+    {"help"    , "Commands list"          , 0, help},
+    {"version" , "Project version"        , 0, WCDLI_printProjectVersion},
+    {"status"  , "Microcontroller status" , 0, WCDLI_printStatus},
+#if defined (LIBOHIBOARD_RTC)
+    {"settime" , "Set the current time"   , 0, setTime},
+    {"gettime" , "Return the current time", 0, getTime},
+#endif
+    {"save"    , "Save parameters"        , 0, save},
+    {"reboot"  , "Reboot..."              , 0, reboot},
 };
 
 #define WCDLI_COMMANDS_SIZE                      (sizeof(mCommands) / sizeof(mCommands[0]))
@@ -184,18 +195,42 @@ static void reboot (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE])
 static void help (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE])
 {
     uint8_t noBlank = 0;
+    uint8_t c = ' ';
+
     for (uint8_t i = 0; i < WCDLI_COMMANDS_SIZE; ++i)
     {
         noBlank = WCDLI_MAX_CHARS_COMMAND_LINE - strlen(mCommands[i].name);
         Uart_sendString(WCDLI_PORT,mCommands[i].name);
+        c = ' ';
         for (uint8_t j=0; j < noBlank; ++j)
         {
-            Uart_putChar(WCDLI_PORT,' ');
+            Uart_write(WCDLI_PORT,&c,100);
         }
-        Uart_putChar(WCDLI_PORT,':');
+        c = ':';
+        Uart_write(WCDLI_PORT,&c,100);
+        c = ' ';
+        Uart_write(WCDLI_PORT,&c,100);
         Uart_sendStringln(WCDLI_PORT,mCommands[i].description);
     }
 }
+
+#if defined (LIBOHIBOARD_RTC)
+static void setTime (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE])
+{
+    if (argc == 2)
+    {
+        uint32_t myTime = atoi (&argv[1][0]);
+        Rtc_setTime(OB_RTC0, myTime);
+    }
+
+    // Send wrong command message!
+}
+
+static void getTime (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE])
+{
+
+}
+#endif
 
 static void save (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE])
 {
@@ -299,7 +334,7 @@ void WCDLI_ckeck (void)
             continue;
         }
 
-        mCurrentCommand[mCurrentCommandIndex] = c;
+        mCurrentCommand[mCurrentCommandIndex++] = c;
 
         if ((mCurrentCommandIndex != 0) &&
             (mCurrentCommand[mCurrentCommandIndex-2] == '\r') &&
