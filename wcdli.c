@@ -63,6 +63,14 @@
 #define WCDLI_MAX_PARAMS                         10
 #endif
 
+#if !defined (WCDLI_MAX_EXTERNAL_COMMAND)
+#define WCDLI_MAX_EXTERNAL_COMMAND               20
+#endif
+
+#if !defined (WCDLI_MAX_EXTERNAL_APP)
+#define WCDLI_MAX_EXTERNAL_APP                   10
+#endif
+
 #if !defined (WCDLI_DIVIDING_CHAR)
 #define WCDLI_DIVIDING_CHAR                      '*'
 #endif
@@ -71,19 +79,15 @@
 #define WCDLI_PROMPT_CHAR                        '%'
 #endif
 
+#if !defined (WCDLI_DIVIDING_DESCRIPTION_CHAR)
+#define WCDLI_DIVIDING_DESCRIPTION_CHAR          ':'
+#endif
+
 #if !defined (WCDLI_BUFFER_DIMENSION)
 #define WCDLI_BUFFER_DIMENSION                   0x00FFu
 #endif
 
 #define WCDLI_NEW_LINE                           "\r\n"
-
-typedef struct _WCDLI_Command_t
-{
-    char *name;
-    char *description;
-    void *device;
-    WCDLI_CommandCallback_t callback;
-} WCDLI_Command_t;
 
 static void resetBuffer (void);
 static void prompt (void);
@@ -111,6 +115,12 @@ static const WCDLI_Command_t mCommands[] =
 };
 
 #define WCDLI_COMMANDS_SIZE                      (sizeof(mCommands) / sizeof(mCommands[0]))
+
+static WCDLI_Command_t mExternalCommands[WCDLI_MAX_EXTERNAL_COMMAND];
+static uint8_t mExternalCommandsIndex = 0;
+
+static WCDLI_Command_t mExternalApps[WCDLI_MAX_EXTERNAL_APP];
+static uint8_t mExternalAppsIndex = 0;
 
 static char mPromptString[6] = {0};
 
@@ -206,11 +216,45 @@ static void help (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE])
         {
             Uart_write(WCDLI_PORT,&c,100);
         }
-        c = ':';
+        c = WCDLI_DIVIDING_DESCRIPTION_CHAR;
         Uart_write(WCDLI_PORT,&c,100);
         c = ' ';
         Uart_write(WCDLI_PORT,&c,100);
         Uart_sendStringln(WCDLI_PORT,mCommands[i].description);
+    }
+
+    for (uint8_t i = 0; i < mExternalCommandsIndex; ++i)
+    {
+        noBlank = WCDLI_MAX_CHARS_COMMAND_LINE - strlen(mExternalCommands[i].name);
+        Uart_sendString(WCDLI_PORT,mExternalCommands[i].name);
+        c = ' ';
+        for (uint8_t j=0; j < noBlank; ++j)
+        {
+            Uart_write(WCDLI_PORT,&c,100);
+        }
+        c = WCDLI_DIVIDING_DESCRIPTION_CHAR;
+        Uart_write(WCDLI_PORT,&c,100);
+        c = ' ';
+        Uart_write(WCDLI_PORT,&c,100);
+        Uart_sendStringln(WCDLI_PORT,mExternalCommands[i].description);
+    }
+
+    for (uint8_t i = 0; i < mExternalAppsIndex; ++i)
+    {
+        noBlank = WCDLI_MAX_CHARS_COMMAND_LINE - strlen(mExternalApps[i].name);
+        Uart_sendString(WCDLI_PORT,mExternalApps[i].name);
+        c = ' ';
+        for (uint8_t j=0; j < noBlank; ++j)
+        {
+            Uart_write(WCDLI_PORT,&c,100);
+        }
+        c = WCDLI_DIVIDING_DESCRIPTION_CHAR;
+        Uart_write(WCDLI_PORT,&c,100);
+        c = ' ';
+        Uart_write(WCDLI_PORT,&c,100);
+        Uart_sendStringln(WCDLI_PORT,mExternalApps[i].description);
+
+        mExternalApps[i].callback(mExternalApps[i].device,1,0);
     }
 }
 
@@ -221,14 +265,16 @@ static void setTime (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE])
     {
         uint32_t myTime = atoi (&argv[1][0]);
         Rtc_setTime(OB_RTC0, myTime);
+        return;
     }
 
     // Send wrong command message!
+    WCDLI_PRINT_WRONG_COMMAND();
 }
 
 static void getTime (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE])
 {
-
+    // TODO
 }
 #endif
 
@@ -246,7 +292,19 @@ static void parseCommand (WCDLI_Command_t* command)
             command->name        = mCommands[i].name;
             command->description = mCommands[i].description;
             command->callback    = mCommands[i].callback;
-            command->device      = mCommands[i].device;
+            command->device      = 0;
+            return;
+        }
+    }
+
+    for (uint8_t i = 0; i < WCDLI_MAX_EXTERNAL_COMMAND; i++)
+    {
+        if (strncmp(mCurrentCommand, mExternalCommands[i].name, strlen(mExternalCommands[i].name)) == 0)
+        {
+            command->name        = mExternalCommands[i].name;
+            command->description = mExternalCommands[i].description;
+            command->callback    = mExternalCommands[i].callback;
+            command->device      = 0;
             return;
         }
     }
@@ -407,6 +465,92 @@ void WCDLI_init (void)
     sayHello();
     prompt();
 
+}
+
+WCDLI_Error_t WCDLI_addCommandByParam (char* name,
+                                       char* description,
+                                       WCDLI_CommandCallback_t callback)
+{
+    ohiassert(callback != NULL);
+
+    if (callback == NULL)
+    {
+        return WCDLI_ERROR_EMPTY_CALLBACK;
+    }
+
+    if (mExternalCommandsIndex < WCDLI_MAX_EXTERNAL_COMMAND)
+    {
+        mExternalCommands[mExternalCommandsIndex].name        = name;
+        mExternalCommands[mExternalCommandsIndex].description = description;
+
+        mExternalCommands[mExternalCommandsIndex].device      = 0;
+        mExternalCommands[mExternalCommandsIndex].callback    = callback;
+
+        mExternalCommandsIndex++;
+
+        return WCDLI_ERROR_SUCCESS;
+    }
+    else
+    {
+        return WCDLI_ERROR_ADD_COMMAND_FAIL;
+    }
+}
+
+WCDLI_Error_t WCDLI_addCommand (WCDLI_Command_t* command)
+{
+    ohiassert(command != NULL);
+
+    if (command != NULL)
+    {
+        return WCDLI_addCommandByParam(command->name, command->description, command->callback);
+    }
+
+    return WCDLI_ERROR_ADD_COMMAND_FAIL;
+}
+
+WCDLI_Error_t WCDLI_addAppByParam (char* name,
+                                   char* description,
+                                   void* app,
+                                   WCDLI_CommandCallback_t callback)
+{
+    ohiassert(callback != NULL);
+
+    if (callback == NULL)
+    {
+        return WCDLI_ERROR_EMPTY_CALLBACK;
+    }
+
+    if (mExternalAppsIndex < WCDLI_MAX_EXTERNAL_APP)
+    {
+        mExternalApps[mExternalAppsIndex].name        = name;
+        mExternalApps[mExternalAppsIndex].description = description;
+
+        mExternalApps[mExternalAppsIndex].device      = app;
+        mExternalApps[mExternalAppsIndex].callback    = callback;
+
+        mExternalAppsIndex++;
+
+        return WCDLI_ERROR_SUCCESS;
+    }
+    else
+    {
+        return WCDLI_ERROR_ADD_APP_FAIL;
+    }
+}
+
+WCDLI_Error_t WCDLI_addApp (WCDLI_Command_t* app)
+{
+    ohiassert(app != NULL);
+
+    if (app != NULL)
+    {
+        return WCDLI_addAppByParam(app->name,
+                                   app->description,
+                                   app->device,
+                                   app->callback);
+    }
+
+    return WCDLI_ERROR_ADD_APP_FAIL;
 }
 
 

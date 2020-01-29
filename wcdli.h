@@ -85,6 +85,44 @@ void WCDLI_printStatus (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE]);
  */
 void WCDLI_ckeck (void);
 
+/*!
+ *
+ * \param[in]        name:
+ * \param[in] description:
+ * \param[in]    callback:
+ * \return
+ */
+WCDLI_Error_t WCDLI_addCommandByParam (char* name,
+                                       char* description,
+                                       WCDLI_CommandCallback_t callback);
+
+/*!
+ *
+ *
+ * \param[in] command:
+ * \return
+ */
+WCDLI_Error_t WCDLI_addCommand (WCDLI_Command_t* command);
+
+/*!
+ *
+ * \param[in]        name:
+ * \param[in] description:
+ * \param[in]    callback:
+ * \param[in]         dev:
+ * \return
+ */
+WCDLI_Error_t WCDLI_addAppByParam (char* name,
+                                   char* description,
+                                   void* app,
+                                   WCDLI_CommandCallback_t callback);
+
+/*!
+ * \param[in] app:
+ * \return
+ */
+WCDLI_Error_t WCDLI_addApp (WCDLI_Command_t* app);
+
 static inline void WCDLI_printString1 (const char* str1)
 {
     Uart_sendStringln(WCDLI_PORT, str1);
@@ -118,6 +156,16 @@ static inline void WCDLI_printString2 (const char* str1, const char* str2)
 #else
 #define WCDLI_PRINT_DANGER_MESSAGE(MESSAGE)      {asm("NOP");}
 #endif
+
+/*!
+ *
+ */
+#define WCDLI_PRINT_WRONG_COMMAND()              WCDLI_PRINT_DANGER_MESSAGE("Wrong Command!")
+
+/*!
+ *
+ */
+#define WCDLI_PRINT_WRONG_PARAM()                WCDLI_PRINT_DANGER_MESSAGE("Wrong Params!")
 
 /*!
  * \}

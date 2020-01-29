@@ -61,6 +61,10 @@ typedef enum _WCDLI_Errors
 
     WCDLI_ERROR_WRONG_PARAMS       = 0x0100,
 
+    WCDLI_ERROR_ADD_COMMAND_FAIL   = 0x0200,
+    WCDLI_ERROR_ADD_APP_FAIL       = 0x0201,
+    WCDLI_ERROR_EMPTY_CALLBACK     = 0x0202,
+
 } WCDLI_Error_t;
 
 /*!
@@ -84,6 +88,17 @@ typedef enum _WCDLI_Errors
  *
  */
 typedef void (*WCDLI_CommandCallback_t)(void* app, int argc, char argv[][WCDLI_BUFFER_SIZE]);
+
+/*!
+ *
+ */
+typedef struct _WCDLI_Command_t
+{
+    char *name;
+    char *description;
+    void *device;
+    WCDLI_CommandCallback_t callback;
+} WCDLI_Command_t;
 
 #if !defined (WCDLI_DEBUG_MESSAGE_LEVEL)
 #define WCDLI_DEBUG_MESSAGE_LEVEL                WCDLI_MESSAGE_LEVEL_ALL
