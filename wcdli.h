@@ -123,6 +123,13 @@ WCDLI_Error_t WCDLI_addAppByParam (char* name,
  */
 WCDLI_Error_t WCDLI_addApp (WCDLI_Command_t* app);
 
+/*!
+ *
+ * \param[in]        name:
+ * \param[in] description:
+ */
+void WCDLI_helpLine (const char* name, const char* description);
+
 static inline void WCDLI_printString1 (const char* str1)
 {
     Uart_sendStringln(WCDLI_PORT, str1);

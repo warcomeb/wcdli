@@ -59,6 +59,10 @@
 #define WCDLI_MAX_CHARS_COMMAND_LINE             30
 #endif
 
+#if !defined (WCDLI_MAX_INDENTATION_CHAR)
+#define WCDLI_MAX_INDENTATION_CHAR               4
+#endif
+
 #if !defined (WCDLI_MAX_PARAMS)
 #define WCDLI_MAX_PARAMS                         10
 #endif
@@ -553,4 +557,26 @@ WCDLI_Error_t WCDLI_addApp (WCDLI_Command_t* app)
     return WCDLI_ERROR_ADD_APP_FAIL;
 }
 
+
+void WCDLI_helpLine (const char* name, const char* description)
+{
+    uint8_t noBlank = 0;
+    uint8_t c = ' ';
+
+    noBlank = WCDLI_MAX_CHARS_COMMAND_LINE - strlen(name) - WCDLI_MAX_INDENTATION_CHAR;
+    for (uint8_t i=0; i < WCDLI_MAX_INDENTATION_CHAR; ++i)
+    {
+        Uart_write(WCDLI_PORT,&c,100);
+    }
+    Uart_sendString(WCDLI_PORT,name);
+    for (uint8_t i=0; i < noBlank; ++i)
+    {
+        Uart_write(WCDLI_PORT,&c,100);
+    }
+    c = WCDLI_DIVIDING_DESCRIPTION_CHAR;
+    Uart_write(WCDLI_PORT,&c,100);
+    c = ' ';
+    Uart_write(WCDLI_PORT,&c,100);
+    Uart_sendStringln(WCDLI_PORT,description);
+}
 
