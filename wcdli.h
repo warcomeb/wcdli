@@ -68,7 +68,7 @@ extern "C"
 /*!
  *
  */
-void WCDLI_init (void);
+void WCDLI_init (Uart_DeviceHandle dev);
 
 /*!
  *

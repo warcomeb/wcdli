@@ -32,12 +32,12 @@
 #error "WCDLI: You must enable UART peripheral."
 #endif
 
-#if ((!defined (WCDLI_PORT))   || \
-     (!defined (WCDLI_PIN_RX)) || \
-     (!defined (WCDLI_PIN_TX)) || \
-     (!defined (WCDLI_BAUDRATE)))
-#error "WCDLI: You must define UART device and other informations."
-#endif
+//#if ((!defined (WCDLI_PORT))   || \
+//     (!defined (WCDLI_PIN_RX)) || \
+//     (!defined (WCDLI_PIN_TX)) || \
+//     (!defined (WCDLI_BAUDRATE)))
+//#error "WCDLI: You must define UART device and other informations."
+//#endif
 
 #if !defined (WCDLI_PORT_CLOCK_SOURCE)
 #if defined (LIBOHIBOARD_ST_STM32)
@@ -203,6 +203,7 @@ static void sayHello (void)
 
 static void reboot (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE])
 {
+    Uart_sendStringln(WCDLI_PORT,"Reboot...");
     NVIC_SystemReset();
 }
 
@@ -279,12 +280,14 @@ static void setTime (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE])
 static void getTime (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE])
 {
     // TODO
+    Uart_sendStringln(WCDLI_PORT,"Command not implemented!");
 }
 #endif
 
 static void save (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE])
 {
     // TODO
+    Uart_sendStringln(WCDLI_PORT,"Command not implemented!");
 }
 
 static void parseCommand (WCDLI_Command_t* command)
@@ -367,12 +370,14 @@ static void parseParams (void)
 
 _weak void WCDLI_printProjectVersion (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE])
 {
-
+    // Intentionally empty
+    Uart_sendStringln(WCDLI_PORT,"Command not implemented!");
 }
 
 _weak void WCDLI_printStatus (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE])
 {
     // Intentionally empty
+    Uart_sendStringln(WCDLI_PORT,"Command not implemented!");
 }
 
 void WCDLI_ckeck (void)
@@ -436,30 +441,12 @@ void WCDLI_ckeck (void)
     }
 }
 
-void WCDLI_init (void)
+void WCDLI_init (Uart_DeviceHandle dev)
 {
-    Uart_Config config =
-    {
-        .rxPin        = WCDLI_PIN_RX,
-        .txPin        = WCDLI_PIN_TX,
-
-        .baudrate     = WCDLI_BAUDRATE,
-
-        .dataBits     = UART_DATABITS_EIGHT,
-        .parity       = UART_PARITY_NONE,
-
-        .clockSource  = WCDLI_PORT_CLOCK_SOURCE,
-        .oversampling = WCDLI_PORT_OVERSAMPLING,
-
-        .mode         = UART_MODE_BOTH,
-
-        .callbackRx   = callbackRx,
-    };
+	Uart_addRxCallback(dev,callbackRx);
 
     // Initialize buffer descriptor
     UtilityBuffer_init(&mBufferDescriptor, mBuffer, WCDLI_BUFFER_DIMENSION+1);
-
-    Uart_init(WCDLI_PORT, &config);
 
     strcat(mPromptString,WCDLI_NEW_LINE);
     mPromptString[strlen(mPromptString)] = WCDLI_PROMPT_CHAR;
