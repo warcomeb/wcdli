@@ -67,6 +67,9 @@ extern "C"
 
 /*!
  *
+ * \note The device handle must be just configured!
+ *
+ * \param[in] dev: The peripheral device handle to use.
  */
 void WCDLI_init (Uart_DeviceHandle dev);
 
@@ -130,16 +133,25 @@ WCDLI_Error_t WCDLI_addApp (WCDLI_Command_t* app);
  */
 void WCDLI_helpLine (const char* name, const char* description);
 
-static inline void WCDLI_printString1 (const char* str1)
-{
-    Uart_sendStringln(WCDLI_PORT, str1);
-}
+/*!
+ * \defgroup WCDLI_Utility WC&DLI Utility functions
+ * \{
+ */
 
-static inline void WCDLI_printString2 (const char* str1, const char* str2)
-{
-    Uart_sendString(WCDLI_PORT, str1);
-    Uart_sendStringln(WCDLI_PORT, str2);
-}
+/*!
+ *
+ */
+void WCDLI_printString1 (const char* str1);
+
+/*!
+ *
+ */
+void WCDLI_printString2 (const char* str1, const char* str2);
+
+/*!
+ *
+ */
+void WCDLI_printString3 (const char* str1, const char* str2, const char* str3);
 
 #define WCDLI_PRINT_MESSAGE(LEVELSTRING,MESSAGE) \
     do {                                         \
@@ -178,6 +190,9 @@ static inline void WCDLI_printString2 (const char* str1, const char* str2)
  * \}
  */
 
+/*!
+ * \}
+ */
 
 #ifdef __cplusplus
 }

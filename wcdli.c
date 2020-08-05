@@ -32,25 +32,6 @@
 #error "WCDLI: You must enable UART peripheral."
 #endif
 
-//#if ((!defined (WCDLI_PORT))   || \
-//     (!defined (WCDLI_PIN_RX)) || \
-//     (!defined (WCDLI_PIN_TX)) || \
-//     (!defined (WCDLI_BAUDRATE)))
-//#error "WCDLI: You must define UART device and other informations."
-//#endif
-
-#if !defined (WCDLI_PORT_CLOCK_SOURCE)
-#if defined (LIBOHIBOARD_ST_STM32)
-#define WCDLI_PORT_CLOCK_SOURCE                  UART_CLOCKSOURCE_PCLK
-#endif
-#endif
-
-#if !defined (WCDLI_PORT_OVERSAMPLING)
-#if defined (LIBOHIBOARD_ST_STM32)
-#define WCDLI_PORT_OVERSAMPLING                  8
-#endif
-#endif
-
 #if !defined (WCDLI_MAX_CHARS_PER_LINE)
 #define WCDLI_MAX_CHARS_PER_LINE                 80
 #endif
@@ -93,12 +74,18 @@
 
 #define WCDLI_NEW_LINE                           "\r\n"
 
+#define WCDLI_BOARD_STRING                       "Board"
+
+#define WCDLI_FIRMWARE_STRING                    "Firmware"
+
 static void resetBuffer (void);
 static void prompt (void);
 static void sayHello (void);
 static void reboot (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE]);
 static void help (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE]);
 static void save (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE]);
+
+static Uart_DeviceHandle mDevice = {0};
 
 #if defined (LIBOHIBOARD_RTC)
 static void setTime (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE]);
@@ -148,12 +135,12 @@ static UtilityBuffer_Descriptor mBufferDescriptor;
     do {                                         \
       uint8_t c = WCDLI_DIVIDING_CHAR;           \
       for (i=0; i<WCDLI_MAX_CHARS_PER_LINE; ++i) \
-          Uart_write(WCDLI_PORT,&c,100);         \
+          Uart_write(mDevice,&c,100);       \
     } while (0)
 
-#define WCDLI_PRINT_NEW_LINE()                     \
-    do {                                           \
-        Uart_sendString(WCDLI_PORT,WCDLI_NEW_LINE);\
+#define WCDLI_PRINT_NEW_LINE()                      \
+    do {                                            \
+        Uart_sendString(mDevice,WCDLI_NEW_LINE);\
     } while (0)
 
 void callbackRx (struct _Uart_Device* dev, void* obj)
@@ -174,7 +161,7 @@ static void resetBuffer (void)
 static void prompt (void)
 {
     resetBuffer();
-    Uart_sendString(WCDLI_PORT, mPromptString);
+    Uart_sendString(mDevice, mPromptString);
 }
 
 static void sayHello (void)
@@ -187,10 +174,10 @@ static void sayHello (void)
 
 #if (defined (PROJECT_NAME) || defined (PROJECT_COPYRIGTH))
 #if defined (PROJECT_NAME)
-    Uart_sendStringln(WCDLI_PORT, PROJECT_NAME);
+    Uart_sendStringln(mDevice, PROJECT_NAME);
 #endif
 #if defined (PROJECT_COPYRIGTH)
-    Uart_sendStringln(WCDLI_PORT, PROJECT_COPYRIGTH);
+    Uart_sendStringln(mDevice, PROJECT_COPYRIGTH);
 #endif
     WCDLI_PRINT_DIVIDING_LINE();
     WCDLI_PRINT_NEW_LINE();
@@ -203,7 +190,7 @@ static void sayHello (void)
 
 static void reboot (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE])
 {
-    Uart_sendStringln(WCDLI_PORT,"Reboot...");
+    WCDLI_PRINT_INFO_MESSAGE("Reboot...");
     NVIC_SystemReset();
 }
 
@@ -215,49 +202,49 @@ static void help (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE])
     for (uint8_t i = 0; i < WCDLI_COMMANDS_SIZE; ++i)
     {
         noBlank = WCDLI_MAX_CHARS_COMMAND_LINE - strlen(mCommands[i].name);
-        Uart_sendString(WCDLI_PORT,mCommands[i].name);
+        Uart_sendString(mDevice,mCommands[i].name);
         c = ' ';
         for (uint8_t j=0; j < noBlank; ++j)
         {
-            Uart_write(WCDLI_PORT,&c,100);
+            Uart_write(mDevice,&c,100);
         }
         c = WCDLI_DIVIDING_DESCRIPTION_CHAR;
-        Uart_write(WCDLI_PORT,&c,100);
+        Uart_write(mDevice,&c,100);
         c = ' ';
-        Uart_write(WCDLI_PORT,&c,100);
-        Uart_sendStringln(WCDLI_PORT,mCommands[i].description);
+        Uart_write(mDevice,&c,100);
+        Uart_sendStringln(mDevice,mCommands[i].description);
     }
 
     for (uint8_t i = 0; i < mExternalCommandsIndex; ++i)
     {
         noBlank = WCDLI_MAX_CHARS_COMMAND_LINE - strlen(mExternalCommands[i].name);
-        Uart_sendString(WCDLI_PORT,mExternalCommands[i].name);
+        Uart_sendString(mDevice,mExternalCommands[i].name);
         c = ' ';
         for (uint8_t j=0; j < noBlank; ++j)
         {
-            Uart_write(WCDLI_PORT,&c,100);
+            Uart_write(mDevice,&c,100);
         }
         c = WCDLI_DIVIDING_DESCRIPTION_CHAR;
-        Uart_write(WCDLI_PORT,&c,100);
+        Uart_write(mDevice,&c,100);
         c = ' ';
-        Uart_write(WCDLI_PORT,&c,100);
-        Uart_sendStringln(WCDLI_PORT,mExternalCommands[i].description);
+        Uart_write(mDevice,&c,100);
+        Uart_sendStringln(mDevice,mExternalCommands[i].description);
     }
 
     for (uint8_t i = 0; i < mExternalAppsIndex; ++i)
     {
         noBlank = WCDLI_MAX_CHARS_COMMAND_LINE - strlen(mExternalApps[i].name);
-        Uart_sendString(WCDLI_PORT,mExternalApps[i].name);
+        Uart_sendString(mDevice,mExternalApps[i].name);
         c = ' ';
         for (uint8_t j=0; j < noBlank; ++j)
         {
-            Uart_write(WCDLI_PORT,&c,100);
+            Uart_write(mDevice,&c,100);
         }
         c = WCDLI_DIVIDING_DESCRIPTION_CHAR;
-        Uart_write(WCDLI_PORT,&c,100);
+        Uart_write(mDevice,&c,100);
         c = ' ';
-        Uart_write(WCDLI_PORT,&c,100);
-        Uart_sendStringln(WCDLI_PORT,mExternalApps[i].description);
+        Uart_write(mDevice,&c,100);
+        Uart_sendStringln(mDevice,mExternalApps[i].description);
 
         mExternalApps[i].callback(mExternalApps[i].device,1,0);
     }
@@ -280,14 +267,14 @@ static void setTime (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE])
 static void getTime (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE])
 {
     // TODO
-    Uart_sendStringln(WCDLI_PORT,"Command not implemented!");
+	WCDLI_PRINT_INFO_MESSAGE("Command not implemented!");
 }
 #endif
 
 static void save (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE])
 {
     // TODO
-    Uart_sendStringln(WCDLI_PORT,"Command not implemented!");
+	WCDLI_PRINT_INFO_MESSAGE("Command not implemented!");
 }
 
 static void parseCommand (WCDLI_Command_t* command)
@@ -370,14 +357,49 @@ static void parseParams (void)
 
 _weak void WCDLI_printProjectVersion (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE])
 {
-    // Intentionally empty
-    Uart_sendStringln(WCDLI_PORT,"Command not implemented!");
+    uint8_t message[WCDLI_MAX_CHARS_PER_LINE] = {0};
+
+    /* Board version */
+#if defined (BOARD_VERSION_STRING)
+    memset(message,0,sizeof(message));
+    strcat(message,WCDLI_BOARD_STRING);
+    strcat(message," : ");
+    strcat(message,BOARD_VERSION_STRING);
+    Uart_sendStringln(mDevice, message);
+#endif
+
+#if defined (FIRMWARE_VERSION_STRING) || (defined (FIRMWARE_VERSION_MAJOR) && defined (FIRMWARE_VERSION_TIME))
+#if defined (FIRMWARE_VERSION_STRING)
+    memset(message,0,sizeof(message));
+    strcat(message,WCDLI_FIRMWARE_STRING);
+    strcat(message," : ");
+    strcat(message,FIRMWARE_VERSION_STRING);
+    Uart_sendStringln(mDevice, message);
+#else
+    uint8_t versionString[64] = {0};
+    Utility_Version_t v =
+    {
+		.f.major    = FIRMWARE_VERSION_MAJOR,
+		.f.minor    = FIRMWARE_VERSION_MINOR,
+		.f.subminor = FIRMWARE_VERSION_BUG,
+		.f.time     = FIRMWARE_VERSION_TIME,
+    };
+    Utility_getVersionString(&v,versionString);
+    memset(message,0,sizeof(message));
+    strcat(message,WCDLI_FIRMWARE_STRING);
+    strcat(message," : ");
+    strcat(message,versionString);
+    Uart_sendStringln(mDevice, message);
+#endif
+#else
+    WCDLI_PRINT_INFO_MESSAGE("Command not implemented!");
+#endif
 }
 
 _weak void WCDLI_printStatus (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE])
 {
     // Intentionally empty
-    Uart_sendStringln(WCDLI_PORT,"Command not implemented!");
+	WCDLI_PRINT_INFO_MESSAGE("Command not implemented!");
 }
 
 void WCDLI_ckeck (void)
@@ -443,7 +465,14 @@ void WCDLI_ckeck (void)
 
 void WCDLI_init (Uart_DeviceHandle dev)
 {
-	Uart_addRxCallback(dev,callbackRx);
+	if (dev == null)
+	{
+		ohiassert(0);
+		return;
+	}
+	// Save device handle
+	mDevice = dev;
+	Uart_addRxCallback(mDevice,callbackRx);
 
     // Initialize buffer descriptor
     UtilityBuffer_init(&mBufferDescriptor, mBuffer, WCDLI_BUFFER_DIMENSION+1);
@@ -553,17 +582,34 @@ void WCDLI_helpLine (const char* name, const char* description)
     noBlank = WCDLI_MAX_CHARS_COMMAND_LINE - strlen(name) - WCDLI_MAX_INDENTATION_CHAR;
     for (uint8_t i=0; i < WCDLI_MAX_INDENTATION_CHAR; ++i)
     {
-        Uart_write(WCDLI_PORT,&c,100);
+        Uart_write(mDevice,&c,100);
     }
-    Uart_sendString(WCDLI_PORT,name);
+    Uart_sendString(mDevice,name);
     for (uint8_t i=0; i < noBlank; ++i)
     {
-        Uart_write(WCDLI_PORT,&c,100);
+        Uart_write(mDevice,&c,100);
     }
     c = WCDLI_DIVIDING_DESCRIPTION_CHAR;
-    Uart_write(WCDLI_PORT,&c,100);
+    Uart_write(mDevice,&c,100);
     c = ' ';
-    Uart_write(WCDLI_PORT,&c,100);
-    Uart_sendStringln(WCDLI_PORT,description);
+    Uart_write(mDevice,&c,100);
+    Uart_sendStringln(mDevice,description);
 }
 
+void WCDLI_printString1 (const char* str1)
+{
+    Uart_sendStringln(mDevice, str1);
+}
+
+void WCDLI_printString2 (const char* str1, const char* str2)
+{
+    Uart_sendString(mDevice,   str1);
+    Uart_sendStringln(mDevice, str2);
+}
+
+void WCDLI_printString3 (const char* str1, const char* str2, const char* str3)
+{
+    Uart_sendString(mDevice,   str1);
+    Uart_sendString(mDevice,   str2);
+    Uart_sendStringln(mDevice, str3);
+}
