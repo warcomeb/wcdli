@@ -65,6 +65,9 @@ extern "C"
 
 #include "wcdli-types.h"
 
+#include <stdarg.h>
+#include <stdio.h>
+
 /*!
  *
  * \note The device handle must be just configured!
@@ -72,6 +75,11 @@ extern "C"
  * \param[in] dev: The peripheral device handle to use.
  */
 void WCDLI_init (Uart_DeviceHandle dev);
+
+/*!
+ * \defgroup WCDLI_Command WC&DLI Command APIs
+ * \{
+ */
 
 /*!
  *
@@ -132,6 +140,25 @@ WCDLI_Error_t WCDLI_addApp (WCDLI_Command_t* app);
  * \param[in] description:
  */
 void WCDLI_helpLine (const char* name, const char* description);
+
+/*!
+ * \}
+ */
+
+/*!
+ * \defgroup WCDLI_Debug WC&DLI Debug APIs
+ * \{
+ */
+
+/*!
+ *
+ * \param[in] format:
+ */
+void WCDLI_debug (const char* format, ...);
+
+/*!
+ * \}
+ */
 
 /*!
  * \defgroup WCDLI_Utility WC&DLI Utility functions

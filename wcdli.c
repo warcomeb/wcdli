@@ -614,9 +614,22 @@ void WCDLI_helpLine (const char* name, const char* description)
     Uart_sendStringln(mDevice,description);
 }
 
+void WCDLI_debug (const char* format, ...)
+{
+    char buffer[WCDLI_MAX_CHARS_PER_LINE] = {0};
+
+    va_list argptr;
+    va_start(argptr,format);
+    vsnprintf(buffer,WCDLI_MAX_CHARS_PER_LINE,format,argptr);
+    va_end(argptr);
+
+    // Print string...
+    Uart_sendString(mDevice,buffer);
+}
+
 void WCDLI_printString1 (const char* str1)
 {
-    Uart_sendStringln(mDevice, str1);
+    Uart_sendStringln(mDevice,str1);
 }
 
 void WCDLI_printString2 (const char* str1, const char* str2)
