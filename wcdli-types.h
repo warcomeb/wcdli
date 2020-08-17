@@ -36,9 +36,6 @@
 #define WARCOMEB_WCDLI_LIBRARY_VERSION_MAJOR     (0x1ul)
 #define WARCOMEB_WCDLI_LIBRARY_VERSION_MINOR     (0x0ul)
 #define WARCOMEB_WCDLI_LIBRARY_VERSION_BUG       (0x0ul)
-#define WARCOMEB_WCDLI_LIBRARY_VERSION           ((WARCOMEB_WCDLI_LIBRARY_VERSION_MAJOR << 16)\
-                                                 |(WARCOMEB_WCDLI_LIBRARY_VERSION_MINOR << 8 )\
-                                                 |(WARCOMEB_WCDLI_LIBRARY_VERSION_BUG        ))
 #define WARCOMEB_WCDLI_LIBRARY_TIME              0
 
 #ifndef __NO_PROFILES
@@ -51,6 +48,16 @@
  * \ingroup  WCDLI
  * \{
  */
+
+#define WCDLI_PROJECT_NAME                       "WC&DLI"
+
+static const Utility_Version_t WCDLI_FIRMWARE_VERSION =
+{
+	.f.major    = WARCOMEB_WCDLI_LIBRARY_VERSION_MAJOR,
+	.f.minor    = WARCOMEB_WCDLI_LIBRARY_VERSION_MINOR,
+	.f.subminor = WARCOMEB_WCDLI_LIBRARY_VERSION_BUG,
+	.f.time     = WARCOMEB_WCDLI_LIBRARY_TIME,
+};
 
 /*!
  * List of all possible errors.
@@ -108,4 +115,4 @@ typedef struct _WCDLI_Command_t
  * \}
  */
 
-#endif // __WARCOMEB_WETS_TYPES_H
+#endif // __WARCOMEB_WCDLI_TYPES_H

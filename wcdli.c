@@ -164,11 +164,29 @@ static void prompt (void)
     Uart_sendString(mDevice, mPromptString);
 }
 
+static void printLibraryVersion (void)
+{
+    char versionString[64] = {0};
+    char message[WCDLI_MAX_CHARS_PER_LINE] = {0};
+
+    Utility_getVersionString(&WCDLI_FIRMWARE_VERSION,versionString);
+    memset(message,0,sizeof(message));
+    strcat(message,WCDLI_PROJECT_NAME);
+    strcat(message," : ");
+    strcat(message,versionString);
+    Uart_sendStringln(mDevice, message);
+}
+
 static void sayHello (void)
 {
     uint8_t i = 0;
 
     WCDLI_PRINT_NEW_LINE();
+    WCDLI_PRINT_DIVIDING_LINE();
+    WCDLI_PRINT_NEW_LINE();
+
+    printLibraryVersion();
+
     WCDLI_PRINT_DIVIDING_LINE();
     WCDLI_PRINT_NEW_LINE();
 
@@ -357,7 +375,7 @@ static void parseParams (void)
 
 _weak void WCDLI_printProjectVersion (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE])
 {
-    uint8_t message[WCDLI_MAX_CHARS_PER_LINE] = {0};
+    char message[WCDLI_MAX_CHARS_PER_LINE] = {0};
 
     /* Board version */
 #if defined (BOARD_VERSION_STRING)
@@ -376,7 +394,7 @@ _weak void WCDLI_printProjectVersion (void* app, int argc, char argv[][WCDLI_BUF
     strcat(message,FIRMWARE_VERSION_STRING);
     Uart_sendStringln(mDevice, message);
 #else
-    uint8_t versionString[64] = {0};
+    char versionString[64] = {0};
     Utility_Version_t v =
     {
 		.f.major    = FIRMWARE_VERSION_MAJOR,
