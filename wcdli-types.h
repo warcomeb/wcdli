@@ -62,7 +62,7 @@ static const Utility_Version_t WCDLI_FIRMWARE_VERSION =
 /*!
  * List of all possible errors.
  */
-typedef enum _WCDLI_Errors
+typedef enum _WCDLI_Errors_t
 {
     WCDLI_ERROR_SUCCESS            = 0x0000,
 
@@ -75,17 +75,18 @@ typedef enum _WCDLI_Errors
 } WCDLI_Error_t;
 
 /*!
- * \defgroup WCDLI_Message_Level WCDLI Debug Message Level
- * \{
+ * Debug message level list.
  */
-#define WCDLI_MESSAGE_LEVEL_NONE                 0
-#define WCDLI_MESSAGE_LEVEL_DANGER               1
-#define WCDLI_MESSAGE_LEVEL_WARNING              2
-#define WCDLI_MESSAGE_LEVEL_INFO                 3
-#define WCDLI_MESSAGE_LEVEL_ALL                  4
-/*!
- * \}
- */
+typedef enum _WCDLI_MessageLevel_t
+{
+	WCDLI_MESSAGELEVEL_NONE    = 0,
+	WCDLI_MESSAGELEVEL_FATAL   = 1,
+	WCDLI_MESSAGELEVEL_DANGER  = 2,
+	WCDLI_MESSAGELEVEL_WARNING = 3,
+	WCDLI_MESSAGELEVEL_INFO    = 4,
+	WCDLI_MESSAGELEVEL_DEBUG   = 5,
+    WCDLI_MESSAGELEVEL_ALL     = 6,
+} WCDLI_MessageLevel_t;
 
 #if !defined (WCDLI_BUFFER_SIZE)
 #define WCDLI_BUFFER_SIZE                        80
@@ -108,7 +109,7 @@ typedef struct _WCDLI_Command_t
 } WCDLI_Command_t;
 
 #if !defined (WCDLI_DEBUG_MESSAGE_LEVEL)
-#define WCDLI_DEBUG_MESSAGE_LEVEL                WCDLI_MESSAGE_LEVEL_ALL
+#define WCDLI_DEBUG_MESSAGE_LEVEL                WCDLI_MESSAGELEVEL_ALL
 #endif
 
 /*!

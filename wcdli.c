@@ -87,6 +87,8 @@ static void save (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE]);
 
 static Uart_DeviceHandle mDevice = {0};
 
+static volatile WCDLI_MessageLevel_t mDebugLevel = WCDLI_DEBUG_MESSAGE_LEVEL;
+
 #if defined (LIBOHIBOARD_RTC)
 static void setTime (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE]);
 static void getTime (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE]);
@@ -468,7 +470,7 @@ void WCDLI_ckeck (void)
             else
             {
                 // Command not found!
-                WCDLI_PRINT_DANGER_MESSAGE("Command not found!");
+            	WCDLI_PRINT_NO_COMMAND();
             }
 
             prompt();
@@ -614,33 +616,64 @@ void WCDLI_helpLine (const char* name, const char* description)
     Uart_sendStringln(mDevice,description);
 }
 
-void WCDLI_debug (const char* format, ...)
+static inline void getDebugLevelString (WCDLI_MessageLevel_t level, char* ascii)
+{
+    switch (level)
+    {
+    case WCDLI_MESSAGELEVEL_FATAL:
+        strcpy(ascii,"[FAT]: ");
+        break;
+    case WCDLI_MESSAGELEVEL_DANGER:
+        strcpy(ascii,"[ERR]: ");
+        break;
+    case WCDLI_MESSAGELEVEL_WARNING:
+        strcpy(ascii,"[WAR]: ");
+        break;
+    case WCDLI_MESSAGELEVEL_INFO:
+        strcpy(ascii,"[INF]: ");
+        break;
+    case WCDLI_MESSAGELEVEL_DEBUG:
+        strcpy(ascii,"[DBG]: ");
+        break;
+    default:
+	case WCDLI_MESSAGELEVEL_NONE:
+        ohiassert(0);
+        break;
+    }
+}
+
+void WCDLI_debug (WCDLI_MessageLevel_t level, const char* str)
 {
     char buffer[WCDLI_MAX_CHARS_PER_LINE] = {0};
 
-    va_list argptr;
-    va_start(argptr,format);
-    vsnprintf(buffer,WCDLI_MAX_CHARS_PER_LINE,format,argptr);
-    va_end(argptr);
+	if (level <= mDebugLevel)
+	{
+		getDebugLevelString(level,buffer);
+		strcat(buffer,str);
 
-    // Print string...
-    Uart_sendString(mDevice,buffer);
+		// Print string...
+		Uart_sendStringln(mDevice,buffer);
+	}
 }
 
-void WCDLI_printString1 (const char* str1)
+void WCDLI_debugByFormat (WCDLI_MessageLevel_t level, const char* format, ...)
 {
-    Uart_sendStringln(mDevice,str1);
-}
+	// Delete space for message level...
+    char buffer[WCDLI_MAX_CHARS_PER_LINE - 7] = {0};
+    char msgLevel[8] = {0};
 
-void WCDLI_printString2 (const char* str1, const char* str2)
-{
-    Uart_sendString(mDevice,   str1);
-    Uart_sendStringln(mDevice, str2);
-}
+	if (level <= mDebugLevel)
+	{
+		va_list argptr;
+		va_start(argptr,format);
+		vsnprintf(buffer,WCDLI_MAX_CHARS_PER_LINE,format,argptr);
+		va_end(argptr);
 
-void WCDLI_printString3 (const char* str1, const char* str2, const char* str3)
-{
-    Uart_sendString(mDevice,   str1);
-    Uart_sendString(mDevice,   str2);
-    Uart_sendStringln(mDevice, str3);
+		// Get message level string
+		getDebugLevelString(level,msgLevel);
+
+		// Print string...
+		Uart_sendString(mDevice,msgLevel);
+		Uart_sendString(mDevice,buffer);
+	}
 }

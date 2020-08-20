@@ -152,9 +152,17 @@ void WCDLI_helpLine (const char* name, const char* description);
 
 /*!
  *
+ * \param[in] level:
+ * \param[in]  str:
+ */
+void WCDLI_debug (WCDLI_MessageLevel_t level, const char* str);
+
+/*!
+ *
+ * \param[in]  level:
  * \param[in] format:
  */
-void WCDLI_debug (const char* format, ...);
+void WCDLI_debugByFormat (WCDLI_MessageLevel_t level, const char* format, ...);
 
 /*!
  * \}
@@ -165,53 +173,40 @@ void WCDLI_debug (const char* format, ...);
  * \{
  */
 
-/*!
- *
- */
-void WCDLI_printString1 (const char* str1);
-
-/*!
- *
- */
-void WCDLI_printString2 (const char* str1, const char* str2);
-
-/*!
- *
- */
-void WCDLI_printString3 (const char* str1, const char* str2, const char* str3);
-
 #define WCDLI_PRINT_MESSAGE(LEVELSTRING,MESSAGE) \
     do {                                         \
-        WCDLI_printString2(LEVELSTRING,MESSAGE); \
+    	WCDLI_debug(LEVELSTRING,MESSAGE);        \
     } while (0)
 
-#if (WCDLI_MESSAGE_LEVEL_INFO <= WCDLI_DEBUG_MESSAGE_LEVEL)
-#define WCDLI_PRINT_INFO_MESSAGE(MESSAGE)        WCDLI_PRINT_MESSAGE("[INF]: ",MESSAGE)
-#else
-#define WCDLI_PRINT_INFO_MESSAGE(MESSAGE)        {asm("NOP");}
-#endif
+#define WCDLI_PRINT_INFO_MESSAGE(MESSAGE)            \
+    do {                                             \
+    	WCDLI_debug(WCDLI_MESSAGELEVEL_INFO,MESSAGE);\
+    } while (0)
 
-#if (WCDLI_MESSAGE_LEVEL_WARNING <= WCDLI_DEBUG_MESSAGE_LEVEL)
-#define WCDLI_PRINT_WARNING_MESSAGE(MESSAGE)     WCDLI_PRINT_MESSAGE("[WAR]: ",MESSAGE)
-#else
-#define WCDLI_PRINT_WARNING_MESSAGE(MESSAGE)     {asm("NOP");}
-#endif
+#define WCDLI_PRINT_WARNING_MESSAGE(MESSAGE)            \
+    do {                                                \
+    	WCDLI_debug(WCDLI_MESSAGELEVEL_WARNING,MESSAGE);\
+    } while (0)
 
-#if (WCDLI_MESSAGE_LEVEL_DANGER <= WCDLI_DEBUG_MESSAGE_LEVEL)
-#define WCDLI_PRINT_DANGER_MESSAGE(MESSAGE)      WCDLI_PRINT_MESSAGE("[ERR]: ",MESSAGE)
-#else
-#define WCDLI_PRINT_DANGER_MESSAGE(MESSAGE)      {asm("NOP");}
-#endif
+#define WCDLI_PRINT_ERROR_MESSAGE(MESSAGE)             \
+    do {                                               \
+    	WCDLI_debug(WCDLI_MESSAGELEVEL_DANGER,MESSAGE);\
+    } while (0)
 
 /*!
  *
  */
-#define WCDLI_PRINT_WRONG_COMMAND()              WCDLI_PRINT_DANGER_MESSAGE("Wrong Command!")
+#define WCDLI_PRINT_WRONG_COMMAND()              WCDLI_PRINT_WARNING_MESSAGE("Wrong Command!")
 
 /*!
  *
  */
-#define WCDLI_PRINT_WRONG_PARAM()                WCDLI_PRINT_DANGER_MESSAGE("Wrong Params!")
+#define WCDLI_PRINT_NO_COMMAND()                 WCDLI_PRINT_WARNING_MESSAGE("Command not found!")
+
+/*!
+ *
+ */
+#define WCDLI_PRINT_WRONG_PARAM()                WCDLI_PRINT_WARNING_MESSAGE("Wrong Params!")
 
 /*!
  * \}
