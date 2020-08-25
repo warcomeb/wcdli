@@ -648,6 +648,7 @@ void WCDLI_debug (WCDLI_MessageLevel_t level, const char* str)
 
 	if (level <= mDebugLevel)
 	{
+		strcat(buffer,mPromptString);
 		getDebugLevelString(level,buffer);
 		strcat(buffer,str);
 
@@ -659,7 +660,7 @@ void WCDLI_debug (WCDLI_MessageLevel_t level, const char* str)
 void WCDLI_debugByFormat (WCDLI_MessageLevel_t level, const char* format, ...)
 {
 	// Delete space for message level...
-    char buffer[WCDLI_MAX_CHARS_PER_LINE - 7] = {0};
+    char buffer[WCDLI_MAX_CHARS_PER_LINE] = {0};
     char msgLevel[8] = {0};
 
 	if (level <= mDebugLevel)
@@ -673,6 +674,7 @@ void WCDLI_debugByFormat (WCDLI_MessageLevel_t level, const char* format, ...)
 		getDebugLevelString(level,msgLevel);
 
 		// Print string...
+		Uart_sendString(mDevice,mPromptString);
 		Uart_sendString(mDevice,msgLevel);
 		Uart_sendString(mDevice,buffer);
 	}
