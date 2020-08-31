@@ -106,16 +106,16 @@ static void getTime (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE]);
 
 static const WCDLI_Command_t mCommands[] =
 {
-    {"help"          , "Commands list"           , 0, help},
-    {"version"       , "Project version"         , 0, WCDLI_printProjectVersion},
-    {"status"        , "Microcontroller status"  , 0, WCDLI_printStatus},
-	{"debug ?|[1-6]" , "Set/Get debug level"     , 0, manageDebugLevel},
+    {"help"    , "Commands list"                    , 0, help},
+    {"version" , "Project version"                  , 0, WCDLI_printProjectVersion},
+    {"status"  , "Microcontroller status"           , 0, WCDLI_printStatus},
+	{"debug"   , "Set/Get debug level with ?|[1-6]" , 0, manageDebugLevel},
 #if defined (LIBOHIBOARD_RTC)
-    {"settime"       , "Set the current time"    , 0, setTime},
-    {"gettime"       , "Return the current time" , 0, getTime},
+    {"settime" , "Set the current time"             , 0, setTime},
+    {"gettime" , "Return the current time"          , 0, getTime},
 #endif
-    {"save"          , "Save parameters"         , 0, save},
-    {"reboot"        , "Reboot..."               , 0, reboot},
+    {"save"    , "Save parameters"                  , 0, save},
+    {"reboot"  , "Reboot..."                        , 0, reboot},
 };
 
 #define WCDLI_COMMANDS_SIZE                      (sizeof(mCommands) / sizeof(mCommands[0]))
