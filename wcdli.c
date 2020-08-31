@@ -72,11 +72,19 @@
 #define WCDLI_BUFFER_DIMENSION                   0x00FFu
 #endif
 
+#if !defined (WCDLI_DEFAULT_OPERATIVE_MODE)
+#define WCDLI_DEFAULT_OPERATIVE_MODE             WCDLI_OPERATIVEMODE_COMMAND
+#endif
+
 #define WCDLI_NEW_LINE                           "\r\n"
 
 #define WCDLI_BOARD_STRING                       "Board"
 
 #define WCDLI_FIRMWARE_STRING                    "Firmware"
+
+#define WCDLI_ENTER_COMMAND_MODE                 "+++\r\n"
+
+#define WCDLI_ENTER_DEBUG_MODE                   "---\r\n"
 
 static void resetBuffer (void);
 static void prompt (void);
@@ -84,10 +92,12 @@ static void sayHello (void);
 static void reboot (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE]);
 static void help (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE]);
 static void save (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE]);
+static void manageDebugLevel (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE]);
 
 static Uart_DeviceHandle mDevice = {0};
 
-static volatile WCDLI_MessageLevel_t mDebugLevel = WCDLI_DEBUG_MESSAGE_LEVEL;
+static WCDLI_MessageLevel_t mDebugLevel = WCDLI_DEBUG_MESSAGE_LEVEL;
+static WCDLI_OperativeMode_t mOperativeMode = WCDLI_DEFAULT_OPERATIVE_MODE;
 
 #if defined (LIBOHIBOARD_RTC)
 static void setTime (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE]);
@@ -96,15 +106,16 @@ static void getTime (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE]);
 
 static const WCDLI_Command_t mCommands[] =
 {
-    {"help"    , "Commands list"          , 0, help},
-    {"version" , "Project version"        , 0, WCDLI_printProjectVersion},
-    {"status"  , "Microcontroller status" , 0, WCDLI_printStatus},
+    {"help"          , "Commands list"           , 0, help},
+    {"version"       , "Project version"         , 0, WCDLI_printProjectVersion},
+    {"status"        , "Microcontroller status"  , 0, WCDLI_printStatus},
+	{"debug ?|[1-6]" , "Set/Get debug level"     , 0, manageDebugLevel},
 #if defined (LIBOHIBOARD_RTC)
-    {"settime" , "Set the current time"   , 0, setTime},
-    {"gettime" , "Return the current time", 0, getTime},
+    {"settime"       , "Set the current time"    , 0, setTime},
+    {"gettime"       , "Return the current time" , 0, getTime},
 #endif
-    {"save"    , "Save parameters"        , 0, save},
-    {"reboot"  , "Reboot..."              , 0, reboot},
+    {"save"          , "Save parameters"         , 0, save},
+    {"reboot"        , "Reboot..."               , 0, reboot},
 };
 
 #define WCDLI_COMMANDS_SIZE                      (sizeof(mCommands) / sizeof(mCommands[0]))
@@ -210,7 +221,7 @@ static void sayHello (void)
 
 static void reboot (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE])
 {
-    WCDLI_PRINT_INFO_MESSAGE("Reboot...");
+    WCDLI_PRINT_CMD_MESSAGE("Reboot...");
     NVIC_SystemReset();
 }
 
@@ -270,6 +281,21 @@ static void help (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE])
     }
 }
 
+static void manageDebugLevel (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE])
+{
+    if ((argc == 2) && (strlen(&argv[1][0]) == 1))
+    {
+        if (argv[1][0] == '?')
+        {
+            WCDLI_debugByFormat(WCDLI_MESSAGELEVEL_NONE,"Current debug level is %d\r\n",mDebugLevel);
+            return;
+        }
+    }
+
+    // Send wrong command message!
+    WCDLI_PRINT_WRONG_COMMAND();
+}
+
 #if defined (LIBOHIBOARD_RTC)
 static void setTime (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE])
 {
@@ -287,14 +313,14 @@ static void setTime (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE])
 static void getTime (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE])
 {
     // TODO
-	WCDLI_PRINT_INFO_MESSAGE("Command not implemented!");
+    WCDLI_PRINT_COMMAND_NOT_IMPLEMENTED();
 }
 #endif
 
 static void save (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE])
 {
     // TODO
-	WCDLI_PRINT_INFO_MESSAGE("Command not implemented!");
+    WCDLI_PRINT_COMMAND_NOT_IMPLEMENTED();
 }
 
 static void parseCommand (WCDLI_Command_t* command)
@@ -399,10 +425,10 @@ _weak void WCDLI_printProjectVersion (void* app, int argc, char argv[][WCDLI_BUF
     char versionString[64] = {0};
     Utility_Version_t v =
     {
-		.f.major    = FIRMWARE_VERSION_MAJOR,
-		.f.minor    = FIRMWARE_VERSION_MINOR,
-		.f.subminor = FIRMWARE_VERSION_BUG,
-		.f.time     = FIRMWARE_VERSION_TIME,
+        .f.major    = FIRMWARE_VERSION_MAJOR,
+        .f.minor    = FIRMWARE_VERSION_MINOR,
+        .f.subminor = FIRMWARE_VERSION_BUG,
+        .f.time     = FIRMWARE_VERSION_TIME,
     };
     Utility_getVersionString(&v,versionString);
     memset(message,0,sizeof(message));
@@ -412,14 +438,14 @@ _weak void WCDLI_printProjectVersion (void* app, int argc, char argv[][WCDLI_BUF
     Uart_sendStringln(mDevice, message);
 #endif
 #else
-    WCDLI_PRINT_INFO_MESSAGE("Command not implemented!");
+    WCDLI_PRINT_COMMAND_NOT_IMPLEMENTED();
 #endif
 }
 
 _weak void WCDLI_printStatus (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE])
 {
     // Intentionally empty
-	WCDLI_PRINT_INFO_MESSAGE("Command not implemented!");
+    WCDLI_PRINT_COMMAND_NOT_IMPLEMENTED();
 }
 
 void WCDLI_ckeck (void)
@@ -458,7 +484,7 @@ void WCDLI_ckeck (void)
                 return;
             }
 
-            WCDLI_PRINT_NEW_LINE();
+            //WCDLI_PRINT_NEW_LINE();
             parseCommand(&command);
 
             if (command.name != NULL)
@@ -485,19 +511,19 @@ void WCDLI_ckeck (void)
 
 void WCDLI_init (Uart_DeviceHandle dev)
 {
-	if (dev == null)
-	{
-		ohiassert(0);
-		return;
-	}
-	// Save device handle
-	mDevice = dev;
-	Uart_addRxCallback(mDevice,callbackRx);
+    if (dev == null)
+    {
+        ohiassert(0);
+        return;
+    }
+    // Save device handle
+    mDevice = dev;
+    Uart_addRxCallback(mDevice,callbackRx);
 
     // Initialize buffer descriptor
     UtilityBuffer_init(&mBufferDescriptor, mBuffer, WCDLI_BUFFER_DIMENSION+1);
 
-    strcat(mPromptString,WCDLI_NEW_LINE);
+//    strcat(mPromptString,WCDLI_NEW_LINE);
     mPromptString[strlen(mPromptString)] = WCDLI_PROMPT_CHAR;
     strcat(mPromptString,"> ");
 
@@ -593,7 +619,6 @@ WCDLI_Error_t WCDLI_addApp (WCDLI_Command_t* app)
     return WCDLI_ERROR_ADD_APP_FAIL;
 }
 
-
 void WCDLI_helpLine (const char* name, const char* description)
 {
     uint8_t noBlank = 0;
@@ -635,8 +660,10 @@ static inline void getDebugLevelString (WCDLI_MessageLevel_t level, char* ascii)
     case WCDLI_MESSAGELEVEL_DEBUG:
         strcpy(ascii,"[DBG]: ");
         break;
+    case WCDLI_MESSAGELEVEL_NONE:
+        // No string!
+        break;
     default:
-	case WCDLI_MESSAGELEVEL_NONE:
         ohiassert(0);
         break;
     }
@@ -646,15 +673,19 @@ void WCDLI_debug (WCDLI_MessageLevel_t level, const char* str)
 {
     char buffer[WCDLI_MAX_CHARS_PER_LINE] = {0};
 
-	if (level <= mDebugLevel)
-	{
-		strcat(buffer,mPromptString);
-		getDebugLevelString(level,buffer);
-		strcat(buffer,str);
+    if (level <= mDebugLevel)
+    {
+        strcat(buffer,mPromptString);
 
-		// Print string...
-		Uart_sendStringln(mDevice,buffer);
-	}
+        if ((level != WCDLI_MESSAGELEVEL_NONE) && (mOperativeMode == WCDLI_OPERATIVEMODE_DEBUG))
+        {
+            getDebugLevelString(level,&buffer[strlen(mPromptString)]);
+        }
+
+        strcat(buffer,str);
+        // Print string...
+        Uart_sendStringln(mDevice,buffer);
+    }
 }
 
 void WCDLI_debugByFormat (WCDLI_MessageLevel_t level, const char* format, ...)
@@ -663,19 +694,24 @@ void WCDLI_debugByFormat (WCDLI_MessageLevel_t level, const char* format, ...)
     char buffer[WCDLI_MAX_CHARS_PER_LINE] = {0};
     char msgLevel[8] = {0};
 
-	if (level <= mDebugLevel)
-	{
-		va_list argptr;
-		va_start(argptr,format);
-		vsnprintf(buffer,WCDLI_MAX_CHARS_PER_LINE,format,argptr);
-		va_end(argptr);
+    if (level <= mDebugLevel)
+    {
+        va_list argptr;
+        va_start(argptr,format);
+        vsnprintf(buffer,WCDLI_MAX_CHARS_PER_LINE,format,argptr);
+        va_end(argptr);
 
-		// Get message level string
-		getDebugLevelString(level,msgLevel);
+        // Print prompt chars
+        Uart_sendString(mDevice,mPromptString);
 
-		// Print string...
-		Uart_sendString(mDevice,mPromptString);
-		Uart_sendString(mDevice,msgLevel);
-		Uart_sendString(mDevice,buffer);
-	}
+        // Print string...
+        if ((level != WCDLI_MESSAGELEVEL_NONE) && (mOperativeMode == WCDLI_OPERATIVEMODE_DEBUG))
+        {
+            // Get message level string
+            getDebugLevelString(level,msgLevel);
+            Uart_sendString(mDevice,msgLevel);
+        }
+
+        Uart_sendString(mDevice,buffer);
+    }
 }

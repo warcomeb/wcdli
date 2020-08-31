@@ -173,6 +173,11 @@ void WCDLI_debugByFormat (WCDLI_MessageLevel_t level, const char* format, ...);
  * \{
  */
 
+#define WCDLI_PRINT_CMD_MESSAGE(MESSAGE)             \
+    do {                                             \
+        WCDLI_debug(WCDLI_MESSAGELEVEL_NONE,MESSAGE);\
+    } while (0)
+
 #define WCDLI_PRINT_MESSAGE(LEVELSTRING,MESSAGE) \
     do {                                         \
     	WCDLI_debug(LEVELSTRING,MESSAGE);        \
@@ -196,17 +201,22 @@ void WCDLI_debugByFormat (WCDLI_MessageLevel_t level, const char* format, ...);
 /*!
  *
  */
-#define WCDLI_PRINT_WRONG_COMMAND()              WCDLI_PRINT_WARNING_MESSAGE("Wrong Command!")
+#define WCDLI_PRINT_WRONG_COMMAND()              WCDLI_PRINT_CMD_MESSAGE("Error: Wrong Command!")
 
 /*!
  *
  */
-#define WCDLI_PRINT_NO_COMMAND()                 WCDLI_PRINT_WARNING_MESSAGE("Command not found!")
+#define WCDLI_PRINT_NO_COMMAND()                 WCDLI_PRINT_CMD_MESSAGE("Error: Command not found!")
 
 /*!
  *
  */
-#define WCDLI_PRINT_WRONG_PARAM()                WCDLI_PRINT_WARNING_MESSAGE("Wrong Params!")
+#define WCDLI_PRINT_WRONG_PARAM()                WCDLI_PRINT_CMD_MESSAGE("Error: Wrong Params!")
+
+/*!
+ *
+ */
+#define WCDLI_PRINT_COMMAND_NOT_IMPLEMENTED()    WCDLI_PRINT_CMD_MESSAGE("Error: Command not implemented!")
 
 /*!
  * \}

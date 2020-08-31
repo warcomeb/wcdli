@@ -88,6 +88,15 @@ typedef enum _WCDLI_MessageLevel_t
     WCDLI_MESSAGELEVEL_ALL     = 6,
 } WCDLI_MessageLevel_t;
 
+/*!
+ * Device operative mode.
+ */
+typedef enum _WCDLI_OperativeMode_t
+{
+    WCDLI_OPERATIVEMODE_DEBUG   = 0,
+    WCDLI_OPERATIVEMODE_COMMAND = 1,
+} WCDLI_OperativeMode_t;
+
 #if !defined (WCDLI_BUFFER_SIZE)
 #define WCDLI_BUFFER_SIZE                        80
 #endif
