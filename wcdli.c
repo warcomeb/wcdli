@@ -279,6 +279,8 @@ static void help (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE])
 
         mExternalApps[i].callback(mExternalApps[i].device,1,0);
     }
+
+    WCDLI_PRINT_NEW_LINE();
 }
 
 static void manageDebugLevel (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE])
@@ -411,7 +413,7 @@ _weak void WCDLI_printProjectVersion (void* app, int argc, char argv[][WCDLI_BUF
     strcat(message,WCDLI_BOARD_STRING);
     strcat(message," : ");
     strcat(message,BOARD_VERSION_STRING);
-    Uart_sendStringln(mDevice, message);
+    WCDLI_debug(WCDLI_MESSAGELEVEL_NONE, message);
 #endif
 
 #if defined (FIRMWARE_VERSION_STRING) || (defined (FIRMWARE_VERSION_MAJOR) && defined (FIRMWARE_VERSION_TIME))
@@ -420,7 +422,7 @@ _weak void WCDLI_printProjectVersion (void* app, int argc, char argv[][WCDLI_BUF
     strcat(message,WCDLI_FIRMWARE_STRING);
     strcat(message," : ");
     strcat(message,FIRMWARE_VERSION_STRING);
-    Uart_sendStringln(mDevice, message);
+    WCDLI_debug(WCDLI_MESSAGELEVEL_NONE, message);
 #else
     char versionString[64] = {0};
     Utility_Version_t v =
@@ -435,7 +437,7 @@ _weak void WCDLI_printProjectVersion (void* app, int argc, char argv[][WCDLI_BUF
     strcat(message,WCDLI_FIRMWARE_STRING);
     strcat(message," : ");
     strcat(message,versionString);
-    Uart_sendStringln(mDevice, message);
+    WCDLI_debug(WCDLI_MESSAGELEVEL_NONE, message);
 #endif
 #else
     WCDLI_PRINT_COMMAND_NOT_IMPLEMENTED();
@@ -681,6 +683,15 @@ void WCDLI_debug (WCDLI_MessageLevel_t level, const char* str)
         {
             getDebugLevelString(level,&buffer[strlen(mPromptString)]);
         }
+        else if ((level == WCDLI_MESSAGELEVEL_NONE) && (mOperativeMode == WCDLI_OPERATIVEMODE_COMMAND))
+        {
+            strcat(buffer,"  ");
+        }
+        else
+        {
+            // Exit without print anything!
+            return;
+        }
 
         strcat(buffer,str);
         // Print string...
@@ -692,7 +703,7 @@ void WCDLI_debugByFormat (WCDLI_MessageLevel_t level, const char* format, ...)
 {
 	// Delete space for message level...
     char buffer[WCDLI_MAX_CHARS_PER_LINE] = {0};
-    char msgLevel[8] = {0};
+    char msgLevel[20] = {0};
 
     if (level <= mDebugLevel)
     {
@@ -702,16 +713,25 @@ void WCDLI_debugByFormat (WCDLI_MessageLevel_t level, const char* format, ...)
         va_end(argptr);
 
         // Print prompt chars
-        Uart_sendString(mDevice,mPromptString);
+        strcat(msgLevel,mPromptString);
 
         // Print string...
         if ((level != WCDLI_MESSAGELEVEL_NONE) && (mOperativeMode == WCDLI_OPERATIVEMODE_DEBUG))
         {
             // Get message level string
-            getDebugLevelString(level,msgLevel);
-            Uart_sendString(mDevice,msgLevel);
+            getDebugLevelString(level,&msgLevel[strlen(mPromptString)]);
+        }
+        else if ((level == WCDLI_MESSAGELEVEL_NONE) && (mOperativeMode == WCDLI_OPERATIVEMODE_COMMAND))
+        {
+            strcat(msgLevel,"  ");
+        }
+        else
+        {
+            // Exit without print anything!
+            return;
         }
 
+        Uart_sendString(mDevice,msgLevel);
         Uart_sendString(mDevice,buffer);
     }
 }
