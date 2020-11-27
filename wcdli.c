@@ -82,9 +82,9 @@
 
 #define WCDLI_FIRMWARE_STRING                    "Firmware"
 
-#define WCDLI_ENTER_COMMAND_MODE                 "+++\r\n"
+#define WCDLI_ENTER_COMMAND_MODE                 "+++"
 
-#define WCDLI_ENTER_DEBUG_MODE                   "---\r\n"
+#define WCDLI_ENTER_DEBUG_MODE                   "---"
 
 static void resetBuffer (void);
 static void prompt (void);
@@ -325,33 +325,54 @@ static void save (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE])
     WCDLI_PRINT_COMMAND_NOT_IMPLEMENTED();
 }
 
-static void parseCommand (WCDLI_Command_t* command)
+/*!
+ * \param[out]    command:
+ * \param[out] changeMode:
+ */
+static void parseCommand (WCDLI_Command_t* command, bool* changeMode)
 {
-    for (uint8_t i = 0; i < WCDLI_COMMANDS_SIZE; i++)
+    if (mOperativeMode == WCDLI_OPERATIVEMODE_COMMAND)
     {
-        if (strncmp(mCurrentCommand, mCommands[i].name, strlen(mCommands[i].name)) == 0)
+        for (uint8_t i = 0; i < WCDLI_COMMANDS_SIZE; i++)
         {
-            command->name        = mCommands[i].name;
-            command->description = mCommands[i].description;
-            command->callback    = mCommands[i].callback;
-            command->device      = 0;
-            return;
+            if (strncmp(mCurrentCommand, mCommands[i].name, strlen(mCommands[i].name)) == 0)
+            {
+                command->name        = mCommands[i].name;
+                command->description = mCommands[i].description;
+                command->callback    = mCommands[i].callback;
+                command->device      = 0;
+
+                *changeMode = FALSE;
+                return;
+            }
+        }
+
+        for (uint8_t i = 0; i < WCDLI_MAX_EXTERNAL_COMMAND; i++)
+        {
+            if (strncmp(mCurrentCommand, mExternalCommands[i].name, strlen(mExternalCommands[i].name)) == 0)
+            {
+                command->name        = mExternalCommands[i].name;
+                command->description = mExternalCommands[i].description;
+                command->callback    = mExternalCommands[i].callback;
+                command->device      = 0;
+
+                *changeMode = FALSE;
+                return;
+            }
         }
     }
 
-    for (uint8_t i = 0; i < WCDLI_MAX_EXTERNAL_COMMAND; i++)
+    if (((strncmp(mCurrentCommand, WCDLI_ENTER_COMMAND_MODE, strlen(WCDLI_ENTER_COMMAND_MODE)) == 0) &&
+         (mOperativeMode == WCDLI_OPERATIVEMODE_DEBUG)) ||
+        ((strncmp(mCurrentCommand, WCDLI_ENTER_DEBUG_MODE, strlen(WCDLI_ENTER_DEBUG_MODE)) == 0) &&
+         (mOperativeMode == WCDLI_OPERATIVEMODE_COMMAND)))
     {
-        if (strncmp(mCurrentCommand, mExternalCommands[i].name, strlen(mExternalCommands[i].name)) == 0)
-        {
-            command->name        = mExternalCommands[i].name;
-            command->description = mExternalCommands[i].description;
-            command->callback    = mExternalCommands[i].callback;
-            command->device      = 0;
-            return;
-        }
+        command->name = mCurrentCommand;
+        *changeMode = TRUE;
+        return;
     }
-
     command->name = NULL;
+    return;
 }
 
 static void parseParams (void)
@@ -406,6 +427,12 @@ static void parseParams (void)
 _weak void WCDLI_printProjectVersion (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE])
 {
     char message[WCDLI_MAX_CHARS_PER_LINE] = {0};
+    bool isHello = false;
+
+    if ((app == 0) && (argc == 0) && (argv == 0))
+    {
+        isHello = true;
+    }
 
     /* Board version */
 #if defined (BOARD_VERSION_STRING)
@@ -413,7 +440,14 @@ _weak void WCDLI_printProjectVersion (void* app, int argc, char argv[][WCDLI_BUF
     strcat(message,WCDLI_BOARD_STRING);
     strcat(message," : ");
     strcat(message,BOARD_VERSION_STRING);
-    WCDLI_debug(WCDLI_MESSAGELEVEL_NONE, message);
+    if (isHello)
+    {
+        Uart_sendStringln(mDevice, message);
+    }
+    else
+    {
+        WCDLI_debug(WCDLI_MESSAGELEVEL_NONE, message);
+    }
 #endif
 
 #if defined (FIRMWARE_VERSION_STRING) || (defined (FIRMWARE_VERSION_MAJOR) && defined (FIRMWARE_VERSION_TIME))
@@ -422,7 +456,14 @@ _weak void WCDLI_printProjectVersion (void* app, int argc, char argv[][WCDLI_BUF
     strcat(message,WCDLI_FIRMWARE_STRING);
     strcat(message," : ");
     strcat(message,FIRMWARE_VERSION_STRING);
-    WCDLI_debug(WCDLI_MESSAGELEVEL_NONE, message);
+    if (isHello)
+    {
+        Uart_sendStringln(mDevice, message);
+    }
+    else
+    {
+        WCDLI_debug(WCDLI_MESSAGELEVEL_NONE, message);
+    }
 #else
     char versionString[64] = {0};
     Utility_Version_t v =
@@ -437,7 +478,14 @@ _weak void WCDLI_printProjectVersion (void* app, int argc, char argv[][WCDLI_BUF
     strcat(message,WCDLI_FIRMWARE_STRING);
     strcat(message," : ");
     strcat(message,versionString);
-    WCDLI_debug(WCDLI_MESSAGELEVEL_NONE, message);
+    if (isHello)
+    {
+        Uart_sendStringln(mDevice, message);
+    }
+    else
+    {
+        WCDLI_debug(WCDLI_MESSAGELEVEL_NONE, message);
+    }
 #endif
 #else
     WCDLI_PRINT_COMMAND_NOT_IMPLEMENTED();
@@ -454,6 +502,7 @@ void WCDLI_ckeck (void)
 {
     char c = '\0';
     WCDLI_Command_t command = {0};
+    bool changeMode = FALSE;
 
     while (!UtilityBuffer_isEmpty(&mBufferDescriptor))
     {
@@ -487,21 +536,34 @@ void WCDLI_ckeck (void)
             }
 
             //WCDLI_PRINT_NEW_LINE();
-            parseCommand(&command);
+            parseCommand(&command, &changeMode);
 
             if (command.name != NULL)
             {
-                // Parse params
-                parseParams();
-                command.callback(command.device,mNumberOfParams,mParams);
+                if (changeMode == FALSE)
+                {
+                    // Parse params
+                    parseParams();
+                    command.callback(command.device, mNumberOfParams, mParams);
+                }
+                else
+                {
+                    // TODO
+                }
             }
             else
             {
-                // Command not found!
-            	WCDLI_PRINT_NO_COMMAND();
+                if (mOperativeMode == WCDLI_OPERATIVEMODE_COMMAND)
+                {
+                    // Command not found!
+                    WCDLI_PRINT_NO_COMMAND();
+                }
             }
 
-            prompt();
+            if (mOperativeMode == WCDLI_OPERATIVEMODE_COMMAND)
+            {
+                prompt();
+            }
             break;
         }
         else
