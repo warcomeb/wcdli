@@ -347,13 +347,27 @@ static void parseCommand (WCDLI_Command_t* command, bool* changeMode)
             }
         }
 
-        for (uint8_t i = 0; i < WCDLI_MAX_EXTERNAL_COMMAND; i++)
+        for (uint8_t i = 0; i < mExternalCommandsIndex; i++)
         {
             if (strncmp(mCurrentCommand, mExternalCommands[i].name, strlen(mExternalCommands[i].name)) == 0)
             {
                 command->name        = mExternalCommands[i].name;
                 command->description = mExternalCommands[i].description;
                 command->callback    = mExternalCommands[i].callback;
+                command->device      = 0;
+
+                *changeMode = FALSE;
+                return;
+            }
+        }
+
+        for (uint8_t i = 0; i < mExternalAppsIndex; i++)
+        {
+            if (strncmp(mCurrentCommand, mExternalApps[i].name, strlen(mExternalApps[i].name)) == 0)
+            {
+                command->name        = mExternalApps[i].name;
+                command->description = mExternalApps[i].description;
+                command->callback    = mExternalApps[i].callback;
                 command->device      = 0;
 
                 *changeMode = FALSE;
