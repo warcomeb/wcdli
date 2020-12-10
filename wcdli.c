@@ -368,7 +368,7 @@ static void parseCommand (WCDLI_Command_t* command, bool* changeMode)
                 command->name        = mExternalApps[i].name;
                 command->description = mExternalApps[i].description;
                 command->callback    = mExternalApps[i].callback;
-                command->device      = 0;
+                command->device      = mExternalApps[i].device;
 
                 *changeMode = FALSE;
                 return;
@@ -435,6 +435,7 @@ static void parseParams (void)
             mNumberOfParams++;
         }
     }
+    mParams[mNumberOfParams][j] = '\0';
     mNumberOfParams++;
 }
 
