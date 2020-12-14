@@ -114,7 +114,7 @@ static const WCDLI_Command_t mCommands[] =
     {"settime" , "Set the current time"             , 0, setTime},
     {"gettime" , "Return the current time"          , 0, getTime},
 #endif
-    {"save"    , "Save parameters"                  , 0, save},
+    {"save"    , "Save parameters"                  , 0, WCDLI_save},
     {"reboot"  , "Reboot..."                        , 0, reboot},
 };
 
@@ -319,7 +319,7 @@ static void getTime (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE])
 }
 #endif
 
-static void save (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE])
+_weak void WCDLI_save (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE])
 {
     // TODO
     WCDLI_PRINT_COMMAND_NOT_IMPLEMENTED();

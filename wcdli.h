@@ -91,6 +91,8 @@ void WCDLI_printProjectVersion (void* app, int argc, char argv[][WCDLI_BUFFER_SI
  */
 void WCDLI_printStatus (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE]);
 
+void WCDLI_save (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE]);
+
 /*!
  *
  */
