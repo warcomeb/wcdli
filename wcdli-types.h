@@ -32,6 +32,10 @@
 #ifndef __WARCOMEB_WCDLI_TYPES_H
 #define __WARCOMEB_WCDLI_TYPES_H
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
 #define WARCOMEB_WCDLI_LIBRARY_VERSION_MAJOR     (0x1ul)
 #define WARCOMEB_WCDLI_LIBRARY_VERSION_MINOR     (0x0ul)
@@ -53,10 +57,12 @@
 
 static const Utility_Version_t WCDLI_FIRMWARE_VERSION =
 {
-	.f.major    = WARCOMEB_WCDLI_LIBRARY_VERSION_MAJOR,
-	.f.minor    = WARCOMEB_WCDLI_LIBRARY_VERSION_MINOR,
-	.f.subminor = WARCOMEB_WCDLI_LIBRARY_VERSION_BUG,
-	.f.time     = WARCOMEB_WCDLI_LIBRARY_TIME,
+    {
+        WARCOMEB_WCDLI_LIBRARY_VERSION_MAJOR,
+        WARCOMEB_WCDLI_LIBRARY_VERSION_MINOR,
+        WARCOMEB_WCDLI_LIBRARY_VERSION_BUG,
+        WARCOMEB_WCDLI_LIBRARY_TIME
+    }
 };
 
 /*!
@@ -124,5 +130,9 @@ typedef struct _WCDLI_Command_t
 /*!
  * \}
  */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // __WARCOMEB_WCDLI_TYPES_H

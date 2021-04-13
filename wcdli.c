@@ -28,6 +28,11 @@
 
 #include <stdlib.h>
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #if !defined (LIBOHIBOARD_UART)
 #error "WCDLI: You must enable UART peripheral."
 #endif
@@ -812,3 +817,7 @@ void WCDLI_debugByFormat (WCDLI_MessageLevel_t level, const char* format, ...)
         Uart_sendString(mDevice,buffer);
     }
 }
+
+#ifdef __cplusplus
+}
+#endif
