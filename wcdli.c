@@ -1,6 +1,6 @@
 /*
  * WC&DLI - Warcomeb Command & Debug Line Interface
- * Copyright (C) 2020 Marco Giammarini <http://www.warcomeb.it>
+ * Copyright (C) 2020-2021 Marco Giammarini <http://www.warcomeb.it>
  *
  * Authors:
  *  Marco Giammarini <m.giammarini@warcomeb.it>
@@ -25,7 +25,7 @@
  */
 
 #include "wcdli.h"
-
+#include "utility-buffer.h"
 #include <stdlib.h>
 
 #ifdef __cplusplus
@@ -33,8 +33,17 @@ extern "C"
 {
 #endif
 
+#if defined (LIBOHIBOARD_VERSION)
 #if !defined (LIBOHIBOARD_UART)
 #error "WCDLI: You must enable UART peripheral."
+#endif
+#else
+#if defined (__MCUXPRESSO)
+#include "fsl_uart.h"
+#include <stdbool.h>
+#define TRUE                                     true
+#define FALSE                                    false
+#endif
 #endif
 
 #if !defined (WCDLI_MAX_CHARS_PER_LINE)
@@ -99,7 +108,13 @@ static void help (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE]);
 static void save (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE]);
 static void manageDebugLevel (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE]);
 
+#if defined (LIBOHIBOARD_VERSION)
 static Uart_DeviceHandle mDevice = {0};
+#else
+#if defined (__MCUXPRESSO)
+static UART_Type* mDevice = {0};
+#endif
+#endif
 
 static WCDLI_MessageLevel_t mDebugLevel = WCDLI_DEBUG_MESSAGE_LEVEL;
 static WCDLI_OperativeMode_t mOperativeMode = WCDLI_DEFAULT_OPERATIVE_MODE;
@@ -161,6 +176,7 @@ static UtilityBuffer_Descriptor mBufferDescriptor;
         Uart_sendString(mDevice,WCDLI_NEW_LINE);\
     } while (0)
 
+#if defined (LIBOHIBOARD_VERSION)
 void callbackRx (struct _Uart_Device* dev, void* obj)
 {
     (void)obj;
@@ -170,6 +186,46 @@ void callbackRx (struct _Uart_Device* dev, void* obj)
 
     UtilityBuffer_push(&mBufferDescriptor,c);
 }
+#else
+#if defined (__MCUXPRESSO)
+void WCDLI_callbackRx (UART_Type* base, void* obj)
+{
+    (void)obj;
+    uint8_t c;
+    // put the new received byte in the buffer
+    uint32_t UartFlags = UART_GetStatusFlags(base);
+    if ((kUART_RxDataRegFullFlag) & UartFlags)
+    {
+        c = UART_ReadByte(base);
+        UtilityBuffer_push(&mBufferDescriptor,c);
+    }
+}
+#else
+#error "[ERROR] No interrupt implementation."
+#endif
+#endif
+
+#if !defined (LIBOHIBOARD_VERSION)
+#if defined (__MCUXPRESSO)
+static void Uart_write (UART_Type* dev, const uint8_t* data, uint32_t timeout)
+{
+    UART_WriteBlocking(dev,(const uint8_t *)data,1);
+}
+
+static void Uart_sendString (UART_Type* dev, const char* text)
+{
+    UART_WriteBlocking(dev,(const uint8_t *)text,sizeof(text)-1);
+}
+
+static void Uart_sendStringln (UART_Type* dev, const char* text)
+{
+    UART_WriteBlocking(dev,(const uint8_t *)text,sizeof(text)-1);
+    UART_WriteBlocking(dev,(const uint8_t *)"\r\n",sizeof('\r\n')-1);
+}
+#else
+#error "[ERROR] Implement UART wrapper functions."
+#endif
+#endif
 
 static void resetBuffer (void)
 {
@@ -187,7 +243,9 @@ static void printLibraryVersion (void)
     char versionString[64] = {0};
     char message[WCDLI_MAX_CHARS_PER_LINE] = {0};
 
+#if defined (LIBOHIBOARD_VERSION)
     Utility_getVersionString(&WCDLI_FIRMWARE_VERSION,versionString);
+#endif
     memset(message,0,sizeof(message));
     strcat(message,WCDLI_PROJECT_NAME);
     strcat(message," : ");
@@ -593,19 +651,31 @@ void WCDLI_ckeck (void)
     }
 }
 
+#if defined (LIBOHIBOARD_VERSION)
 void WCDLI_init (Uart_DeviceHandle dev)
+#else
+#if defined (__MCUXPRESSO)
+void WCDLI_init (UART_Type* dev)
+#endif
+#endif
 {
-    if (dev == null)
+    if (dev == NULL)
     {
+#if defined (LIBOHIBOARD_VERSION)
         ohiassert(0);
+#endif
         return;
     }
     // Save device handle
     mDevice = dev;
+#if defined (LIBOHIBOARD_VERSION)
     Uart_addRxCallback(mDevice,callbackRx);
+#else
+    // This association is external...
+#endif
 
     // Initialize buffer descriptor
-    UtilityBuffer_init(&mBufferDescriptor, mBuffer, WCDLI_BUFFER_DIMENSION+1);
+    UtilityBuffer_init(&mBufferDescriptor,(uint8_t*)mBuffer, WCDLI_BUFFER_DIMENSION+1);
 
 //    strcat(mPromptString,WCDLI_NEW_LINE);
     mPromptString[strlen(mPromptString)] = WCDLI_PROMPT_CHAR;
@@ -748,7 +818,9 @@ static inline void getDebugLevelString (WCDLI_MessageLevel_t level, char* ascii)
         // No string!
         break;
     default:
+#if defined (LIBOHIBOARD_VERSION)
         ohiassert(0);
+#endif
         break;
     }
 }

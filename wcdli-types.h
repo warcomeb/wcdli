@@ -43,7 +43,7 @@ extern "C"
 #define WARCOMEB_WCDLI_LIBRARY_TIME              0
 
 #ifndef __NO_PROFILES
-#include "board.h"
+#include "hardware.h"
 #include "firmware.h"
 #endif
 
@@ -55,6 +55,7 @@ extern "C"
 
 #define WCDLI_PROJECT_NAME                       "WC&DLI"
 
+#if defined (LIBOHIBOARD_VERSION)
 static const Utility_Version_t WCDLI_FIRMWARE_VERSION =
 {
     {
@@ -64,6 +65,11 @@ static const Utility_Version_t WCDLI_FIRMWARE_VERSION =
         WARCOMEB_WCDLI_LIBRARY_TIME
     }
 };
+#endif
+
+#if !defined _weak
+#define _weak __WEAK
+#endif
 
 /*!
  * List of all possible errors.

@@ -68,13 +68,36 @@ extern "C"
 #include <stdarg.h>
 #include <stdio.h>
 
+#if !defined (LIBOHIBOARD_VERSION)
+#if defined (__MCUXPRESSO)
+#include "fsl_uart.h"
+#endif
+#endif
+
 /*!
  *
  * \note The device handle must be just configured!
  *
  * \param[in] dev: The peripheral device handle to use.
  */
+#if defined (LIBOHIBOARD_VERSION)
 void WCDLI_init (Uart_DeviceHandle dev);
+#else
+#if defined (__MCUXPRESSO)
+void WCDLI_init (UART_Type* dev);
+#else
+#error "[ERROR] Peripheral not defined!"
+#endif
+#endif
+
+#if !defined (LIBOHIBOARD_VERSION)
+#if defined (__MCUXPRESSO)
+void WCDLI_callbackRx (UART_Type* base, void* obj);
+#else
+#error "[ERROR] Peripheral callback not defined!"
+#endif
+#endif
+
 
 /*!
  * \defgroup WCDLI_Command WC&DLI Command APIs
