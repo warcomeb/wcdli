@@ -214,13 +214,15 @@ static void Uart_write (UART_Type* dev, const uint8_t* data, uint32_t timeout)
 
 static void Uart_sendString (UART_Type* dev, const char* text)
 {
-    UART_WriteBlocking(dev,(const uint8_t *)text,sizeof(text)-1);
+    uint16_t len = strlen(text);
+    UART_WriteBlocking(dev,(const uint8_t *)text,len);
 }
 
 static void Uart_sendStringln (UART_Type* dev, const char* text)
 {
-    UART_WriteBlocking(dev,(const uint8_t *)text,sizeof(text)-1);
-    UART_WriteBlocking(dev,(const uint8_t *)"\r\n",sizeof('\r\n')-1);
+    uint16_t len = strlen(text);
+    UART_WriteBlocking(dev,(const uint8_t *)text,len);
+    UART_WriteBlocking(dev,(const uint8_t *)"\r\n",2);
 }
 #else
 #error "[ERROR] Implement UART wrapper functions."
