@@ -226,6 +226,11 @@ void WCDLI_debugByFormat (WCDLI_MessageLevel_t level, const char* format, ...);
 /*!
  *
  */
+#define WCDLI_PRINT_SUCCESS()                    WCDLI_PRINT_CMD_MESSAGE("Command Success!")
+
+/*!
+ *
+ */
 #define WCDLI_PRINT_WRONG_COMMAND()              WCDLI_PRINT_CMD_MESSAGE("Error: Wrong Command!")
 
 /*!
