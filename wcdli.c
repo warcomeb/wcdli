@@ -689,8 +689,8 @@ void WCDLI_init (UART_Type* dev)
 
 }
 
-WCDLI_Error_t WCDLI_addCommandByParam (char* name,
-                                       char* description,
+WCDLI_Error_t WCDLI_addCommandByParam (const char* name,
+                                       const char* description,
                                        WCDLI_CommandCallback_t callback)
 {
     ohiassert(callback != NULL);
@@ -730,8 +730,8 @@ WCDLI_Error_t WCDLI_addCommand (WCDLI_Command_t* command)
     return WCDLI_ERROR_ADD_COMMAND_FAIL;
 }
 
-WCDLI_Error_t WCDLI_addAppByParam (char* name,
-                                   char* description,
+WCDLI_Error_t WCDLI_addAppByParam (const char* name,
+                                   const char* description,
                                    void* app,
                                    WCDLI_CommandCallback_t callback)
 {

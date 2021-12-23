@@ -128,8 +128,8 @@ void WCDLI_ckeck (void);
  * \param[in]    callback:
  * \return
  */
-WCDLI_Error_t WCDLI_addCommandByParam (char* name,
-                                       char* description,
+WCDLI_Error_t WCDLI_addCommandByParam (const char* name,
+                                       const char* description,
                                        WCDLI_CommandCallback_t callback);
 
 /*!
@@ -148,8 +148,8 @@ WCDLI_Error_t WCDLI_addCommand (WCDLI_Command_t* command);
  * \param[in]         dev:
  * \return
  */
-WCDLI_Error_t WCDLI_addAppByParam (char* name,
-                                   char* description,
+WCDLI_Error_t WCDLI_addAppByParam (const char* name,
+                                   const char* description,
                                    void* app,
                                    WCDLI_CommandCallback_t callback);
 

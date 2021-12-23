@@ -123,8 +123,8 @@ typedef void (*WCDLI_CommandCallback_t)(void* app, int argc, char argv[][WCDLI_B
  */
 typedef struct _WCDLI_Command_t
 {
-    char *name;
-    char *description;
+    const char *name;
+    const char *description;
     void *device;
     WCDLI_CommandCallback_t callback;
 } WCDLI_Command_t;
