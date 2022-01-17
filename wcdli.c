@@ -105,7 +105,6 @@ static void prompt (void);
 static void sayHello (void);
 static void reboot (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE]);
 static void help (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE]);
-static void save (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE]);
 static void manageDebugLevel (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE]);
 
 #if defined (LIBOHIBOARD_VERSION)
@@ -586,7 +585,7 @@ void WCDLI_ckeck (void)
 
     while (!UtilityBuffer_isEmpty(&mBufferDescriptor))
     {
-        UtilityBuffer_pull(&mBufferDescriptor,&c);
+        UtilityBuffer_pull(&mBufferDescriptor,(uint8_t*)&c);
 
         // Use the back space for delete char
         if ((c == '\b') && (mCurrentCommandIndex > 0))
@@ -677,7 +676,7 @@ void WCDLI_init (UART_Type* dev)
 #endif
 
     // Initialize buffer descriptor
-    UtilityBuffer_init(&mBufferDescriptor,(uint8_t*)mBuffer, WCDLI_BUFFER_DIMENSION+1);
+    UtilityBuffer_init(&mBufferDescriptor,(uint8_t*)mBuffer,WCDLI_BUFFER_DIMENSION+1);
 
 //    strcat(mPromptString,WCDLI_NEW_LINE);
     mPromptString[strlen(mPromptString)] = WCDLI_PROMPT_CHAR;
