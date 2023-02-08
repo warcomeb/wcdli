@@ -43,6 +43,11 @@ extern "C"
 #include <stdbool.h>
 #define TRUE                                     true
 #define FALSE                                    false
+#elif defined (__NUECLIPSE)
+#include "uart.h"
+#include <stdbool.h>
+#define TRUE                                     true
+#define FALSE                                    false
 #endif
 #endif
 
@@ -112,6 +117,8 @@ static Uart_DeviceHandle mDevice = {0};
 #else
 #if defined (__MCUXPRESSO)
 static UART_Type* mDevice = {0};
+#elif defined (__NUECLIPSE)
+static UART_T* mDevice = {0};
 #endif
 #endif
 
@@ -199,6 +206,20 @@ void WCDLI_callbackRx (UART_Type* base, void* obj)
         UtilityBuffer_push(&mBufferDescriptor,c);
     }
 }
+#elif defined (__NUECLIPSE)
+// FIXME
+void WCDLI_callbackRx (UART_T* base, void* obj)
+{
+    (void)obj;
+    uint8_t c;
+    // put the new received byte in the buffer
+//    uint32_t UartFlags = UART_GetStatusFlags(base);
+//    if ((kUART_RxDataRegFullFlag) & UartFlags)
+//    {
+//        c = UART_ReadByte(base);
+//        UtilityBuffer_push(&mBufferDescriptor,c);
+//    }
+}
 #else
 #error "[ERROR] No interrupt implementation."
 #endif
@@ -222,6 +243,24 @@ static void Uart_sendStringln (UART_Type* dev, const char* text)
     uint16_t len = strlen(text);
     UART_WriteBlocking(dev,(const uint8_t *)text,len);
     UART_WriteBlocking(dev,(const uint8_t *)"\r\n",2);
+}
+#elif defined (__NUECLIPSE)
+static void Uart_write (UART_T* dev, const uint8_t* data, uint32_t timeout)
+{
+    UART_Write(dev,(const uint8_t *)data,1);
+}
+
+static void Uart_sendString (UART_T* dev, const char* text)
+{
+    uint16_t len = strlen(text);
+    UART_Write(dev,(const uint8_t *)text,len);
+}
+
+static void Uart_sendStringln (UART_T* dev, const char* text)
+{
+    uint16_t len = strlen(text);
+    UART_Write(dev,(const uint8_t *)text,len);
+    UART_Write(dev,(const uint8_t *)"\r\n",2);
 }
 #else
 #error "[ERROR] Implement UART wrapper functions."
@@ -657,6 +696,8 @@ void WCDLI_init (Uart_DeviceHandle dev)
 #else
 #if defined (__MCUXPRESSO)
 void WCDLI_init (UART_Type* dev)
+#elif defined (__NUECLIPSE)
+void WCDLI_init (UART_T* dev)
 #endif
 #endif
 {

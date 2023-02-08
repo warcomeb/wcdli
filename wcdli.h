@@ -71,6 +71,8 @@ extern "C"
 #if !defined (LIBOHIBOARD_VERSION)
 #if defined (__MCUXPRESSO)
 #include "fsl_uart.h"
+#elif defined (__NUECLIPSE)
+#include "uart.h"
 #endif
 #endif
 
@@ -85,6 +87,8 @@ void WCDLI_init (Uart_DeviceHandle dev);
 #else
 #if defined (__MCUXPRESSO)
 void WCDLI_init (UART_Type* dev);
+#elif defined (__NUECLIPSE)
+void WCDLI_init (UART_T* dev);
 #else
 #error "[ERROR] Peripheral not defined!"
 #endif
@@ -93,6 +97,8 @@ void WCDLI_init (UART_Type* dev);
 #if !defined (LIBOHIBOARD_VERSION)
 #if defined (__MCUXPRESSO)
 void WCDLI_callbackRx (UART_Type* base, void* obj);
+#elif defined (__NUECLIPSE)
+void WCDLI_callbackRx (UART_T* base, void* obj);
 #else
 #error "[ERROR] Peripheral callback not defined!"
 #endif
@@ -205,22 +211,22 @@ void WCDLI_debugByFormat (WCDLI_MessageLevel_t level, const char* format, ...);
 
 #define WCDLI_PRINT_MESSAGE(LEVELSTRING,MESSAGE) \
     do {                                         \
-    	WCDLI_debug(LEVELSTRING,MESSAGE);        \
+        WCDLI_debug(LEVELSTRING,MESSAGE);        \
     } while (0)
 
 #define WCDLI_PRINT_INFO_MESSAGE(MESSAGE)            \
     do {                                             \
-    	WCDLI_debug(WCDLI_MESSAGELEVEL_INFO,MESSAGE);\
+        WCDLI_debug(WCDLI_MESSAGELEVEL_INFO,MESSAGE);\
     } while (0)
 
 #define WCDLI_PRINT_WARNING_MESSAGE(MESSAGE)            \
     do {                                                \
-    	WCDLI_debug(WCDLI_MESSAGELEVEL_WARNING,MESSAGE);\
+        WCDLI_debug(WCDLI_MESSAGELEVEL_WARNING,MESSAGE);\
     } while (0)
 
 #define WCDLI_PRINT_ERROR_MESSAGE(MESSAGE)             \
     do {                                               \
-    	WCDLI_debug(WCDLI_MESSAGELEVEL_DANGER,MESSAGE);\
+        WCDLI_debug(WCDLI_MESSAGELEVEL_DANGER,MESSAGE);\
     } while (0)
 
 /*!

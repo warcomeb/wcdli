@@ -38,7 +38,7 @@ extern "C"
 #endif
 
 #define WARCOMEB_WCDLI_LIBRARY_VERSION_MAJOR     (0x1ul)
-#define WARCOMEB_WCDLI_LIBRARY_VERSION_MINOR     (0x0ul)
+#define WARCOMEB_WCDLI_LIBRARY_VERSION_MINOR     (0x1ul)
 #define WARCOMEB_WCDLI_LIBRARY_VERSION_BUG       (0x0ul)
 #define WARCOMEB_WCDLI_LIBRARY_TIME              0
 
@@ -68,7 +68,11 @@ static const Utility_Version_t WCDLI_FIRMWARE_VERSION =
 #endif
 
 #if !defined _weak
+#if defined (__NUECLIPSE)
+#define _weak __attribute__((weak))
+#else
 #define _weak __WEAK
+#endif
 #endif
 
 /*!
