@@ -46,8 +46,10 @@ extern "C"
 #elif defined (__NUECLIPSE)
 #include "uart.h"
 #include <stdbool.h>
+#if !defined (TRUE)
 #define TRUE                                     true
 #define FALSE                                    false
+#endif
 #endif
 #endif
 
@@ -111,6 +113,37 @@ static void sayHello (void);
 static void reboot (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE]);
 static void help (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE]);
 static void manageDebugLevel (void* app, int argc, char argv[][WCDLI_BUFFER_SIZE]);
+
+#if !defined (LIBOHIBOARD_VERSION)
+static void Utility_getVersionString (const Utility_Version_t* version, char* toString)
+{
+    uint8_t tmp[5] = {0};
+    uint8_t tmp2[32] = {0};
+
+    // Major
+    itoa(version->f.major,tmp,10);
+    //u16td(tmp,version->f.major);
+    strcat(toString,tmp);
+    strcat(toString,".");
+
+    // Minor
+    memset(tmp,0,sizeof(tmp));
+    itoa(version->f.minor,tmp,10);
+    //u16td(tmp,version->f.minor);
+    strcat(toString,tmp);
+    strcat(toString,".");
+
+    // Sub Minor
+    memset(tmp,0,sizeof(tmp));
+    itoa(version->f.subminor,tmp,10);
+    //u16td(tmp,version->f.subminor);
+    strcat(toString,tmp);
+    strcat(toString," of ");
+
+    //Time_unixtimeToString(version->f.time,tmp2);
+    //strcat(toString,tmp2);
+}
+#endif
 
 #if defined (LIBOHIBOARD_VERSION)
 static Uart_DeviceHandle mDevice = {0};
@@ -247,20 +280,20 @@ static void Uart_sendStringln (UART_Type* dev, const char* text)
 #elif defined (__NUECLIPSE)
 static void Uart_write (UART_T* dev, const uint8_t* data, uint32_t timeout)
 {
-    UART_Write(dev,(const uint8_t *)data,1);
+    UART_Write(dev,(uint8_t *)data,1);
 }
 
 static void Uart_sendString (UART_T* dev, const char* text)
 {
     uint16_t len = strlen(text);
-    UART_Write(dev,(const uint8_t *)text,len);
+    UART_Write(dev,(uint8_t *)text,len);
 }
 
 static void Uart_sendStringln (UART_T* dev, const char* text)
 {
     uint16_t len = strlen(text);
-    UART_Write(dev,(const uint8_t *)text,len);
-    UART_Write(dev,(const uint8_t *)"\r\n",2);
+    UART_Write(dev,(uint8_t *)text,len);
+    UART_Write(dev,(uint8_t *)"\r\n",2);
 }
 #else
 #error "[ERROR] Implement UART wrapper functions."
@@ -588,7 +621,7 @@ _weak void WCDLI_printProjectVersion (void* app, int argc, char argv[][WCDLI_BUF
     {
         .f.major    = FIRMWARE_VERSION_MAJOR,
         .f.minor    = FIRMWARE_VERSION_MINOR,
-        .f.subminor = FIRMWARE_VERSION_BUG,
+        .f.subminor = FIRMWARE_VERSION_SUBMINOR,
         .f.time     = FIRMWARE_VERSION_TIME,
     };
     Utility_getVersionString(&v,versionString);
@@ -733,7 +766,9 @@ WCDLI_Error_t WCDLI_addCommandByParam (const char* name,
                                        const char* description,
                                        WCDLI_CommandCallback_t callback)
 {
+#if defined (LIBOHIBOARD_VERSION)
     ohiassert(callback != NULL);
+#endif
 
     if (callback == NULL)
     {
@@ -760,7 +795,9 @@ WCDLI_Error_t WCDLI_addCommandByParam (const char* name,
 
 WCDLI_Error_t WCDLI_addCommand (WCDLI_Command_t* command)
 {
+#if defined (LIBOHIBOARD_VERSION)
     ohiassert(command != NULL);
+#endif
 
     if (command != NULL)
     {
@@ -775,7 +812,9 @@ WCDLI_Error_t WCDLI_addAppByParam (const char* name,
                                    void* app,
                                    WCDLI_CommandCallback_t callback)
 {
+#if defined (LIBOHIBOARD_VERSION)
     ohiassert(callback != NULL);
+#endif
 
     if (callback == NULL)
     {
@@ -802,7 +841,9 @@ WCDLI_Error_t WCDLI_addAppByParam (const char* name,
 
 WCDLI_Error_t WCDLI_addApp (WCDLI_Command_t* app)
 {
+#if defined (LIBOHIBOARD_VERSION)
     ohiassert(app != NULL);
+#endif
 
     if (app != NULL)
     {

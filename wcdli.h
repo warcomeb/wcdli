@@ -76,6 +76,22 @@ extern "C"
 #endif
 #endif
 
+#if !defined (LIBOHIBOARD_VERSION)
+typedef struct _Utility_VersionFields_t
+{
+    uint8_t  major;
+    uint8_t  minor;
+    uint16_t subminor;
+    uint32_t time;
+} __packed Utility_VersionFields_t;
+
+typedef union _Utility_Version_t
+{
+    Utility_VersionFields_t f;
+    uint8_t b[sizeof (Utility_VersionFields_t)];
+} __packed Utility_Version_t;
+#endif
+
 /*!
  *
  * \note The device handle must be just configured!
