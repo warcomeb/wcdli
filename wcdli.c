@@ -245,13 +245,9 @@ void WCDLI_callbackRx (UART_T* base, void* obj)
 {
     (void)obj;
     uint8_t c;
-    // put the new received byte in the buffer
-//    uint32_t UartFlags = UART_GetStatusFlags(base);
-//    if ((kUART_RxDataRegFullFlag) & UartFlags)
-//    {
-//        c = UART_ReadByte(base);
-//        UtilityBuffer_push(&mBufferDescriptor,c);
-//    }
+
+    UART_Read(base,&c,1);
+    UtilityBuffer_push(&mBufferDescriptor,c);
 }
 #else
 #error "[ERROR] No interrupt implementation."
@@ -316,9 +312,19 @@ static void printLibraryVersion (void)
     char versionString[64] = {0};
     char message[WCDLI_MAX_CHARS_PER_LINE] = {0};
 
-#if defined (LIBOHIBOARD_VERSION)
-    Utility_getVersionString(&WCDLI_FIRMWARE_VERSION,versionString);
+#if !defined (LIBOHIBOARD_VERSION)
+    static const Utility_Version_t WCDLI_FIRMWARE_VERSION =
+    {
+        {
+            WARCOMEB_WCDLI_LIBRARY_VERSION_MAJOR,
+            WARCOMEB_WCDLI_LIBRARY_VERSION_MINOR,
+            WARCOMEB_WCDLI_LIBRARY_VERSION_BUG,
+            WARCOMEB_WCDLI_LIBRARY_TIME
+        }
+    };
 #endif
+    Utility_getVersionString(&WCDLI_FIRMWARE_VERSION,versionString);
+
     memset(message,0,sizeof(message));
     strcat(message,WCDLI_PROJECT_NAME);
     strcat(message," : ");
