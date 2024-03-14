@@ -39,7 +39,11 @@ extern "C"
 #endif
 #else
 #if defined (__MCUXPRESSO)
+#if defined (__MCUXPRESSO_UART)
 #include "fsl_uart.h"
+#elif defined (__MCUXPRESSO_USART)
+#include "fsl_usart.h"
+#endif
 #include <stdbool.h>
 #define TRUE                                     true
 #define FALSE                                    false
@@ -149,7 +153,11 @@ static void Utility_getVersionString (const Utility_Version_t* version, char* to
 static Uart_DeviceHandle mDevice = {0};
 #else
 #if defined (__MCUXPRESSO)
+#if defined (__MCUXPRESSO_UART)
 static UART_Type* mDevice = {0};
+#elif defined (__MCUXPRESSO_USART)
+static USART_Type* mDevice = {0};
+#endif
 #elif defined (__NUECLIPSE)
 static UART_T* mDevice = {0};
 #endif
@@ -168,7 +176,7 @@ static const WCDLI_Command_t mCommands[] =
     {"help"    , "Commands list"                    , 0, help},
     {"version" , "Project version"                  , 0, WCDLI_printProjectVersion},
     {"status"  , "Microcontroller status"           , 0, WCDLI_printStatus},
-	{"debug"   , "Set/Get debug level with ?|[1-6]" , 0, manageDebugLevel},
+    {"debug"   , "Set/Get debug level with ?|[1-6]" , 0, manageDebugLevel},
 #if defined (LIBOHIBOARD_RTC)
     {"settime" , "Set the current time"             , 0, setTime},
     {"gettime" , "Return the current time"          , 0, getTime},
@@ -227,6 +235,7 @@ void callbackRx (struct _Uart_Device* dev, void* obj)
 }
 #else
 #if defined (__MCUXPRESSO)
+#if defined (__MCUXPRESSO_UART)
 void WCDLI_callbackRx (UART_Type* base, void* obj)
 {
     (void)obj;
@@ -236,6 +245,20 @@ void WCDLI_callbackRx (UART_Type* base, void* obj)
     if ((kUART_RxDataRegFullFlag) & UartFlags)
     {
         c = UART_ReadByte(base);
+        UtilityBuffer_push(&mBufferDescriptor,c);
+    }
+}
+#elif defined (__MCUXPRESSO_USART)
+void WCDLI_callbackRx (USART_Type* base, void* obj)
+#endif
+{
+    (void)obj;
+    uint8_t c;
+    // put the new received byte in the buffer
+    uint32_t UartFlags = USART_GetStatusFlags(base);
+    if ((kUSART_RxFifoFullFlag) & UartFlags)
+    {
+        c = USART_ReadByte(base);
         UtilityBuffer_push(&mBufferDescriptor,c);
     }
 }
@@ -256,23 +279,48 @@ void WCDLI_callbackRx (UART_T* base, void* obj)
 
 #if !defined (LIBOHIBOARD_VERSION)
 #if defined (__MCUXPRESSO)
+#if defined (__MCUXPRESSO_UART)
 static void Uart_write (UART_Type* dev, const uint8_t* data, uint32_t timeout)
 {
     UART_WriteBlocking(dev,(const uint8_t *)data,1);
 }
+#elif defined (__MCUXPRESSO_USART)
+static void Uart_write (USART_Type* dev, const uint8_t* data, uint32_t timeout)
+{
+    USART_WriteBlocking(dev,(const uint8_t *)data,1);
+}
+#endif
 
+#if defined (__MCUXPRESSO_UART)
 static void Uart_sendString (UART_Type* dev, const char* text)
 {
     uint16_t len = strlen(text);
     UART_WriteBlocking(dev,(const uint8_t *)text,len);
 }
+#elif defined (__MCUXPRESSO_USART)
+static void Uart_sendString (USART_Type* dev, const char* text)
+{
+    uint16_t len = strlen(text);
+    USART_WriteBlocking(dev,(const uint8_t *)text,len);
+}
+#endif
 
+#if defined (__MCUXPRESSO_UART)
 static void Uart_sendStringln (UART_Type* dev, const char* text)
 {
     uint16_t len = strlen(text);
     UART_WriteBlocking(dev,(const uint8_t *)text,len);
     UART_WriteBlocking(dev,(const uint8_t *)"\r\n",2);
 }
+#elif defined (__MCUXPRESSO_USART)
+static void Uart_sendStringln (USART_Type* dev, const char* text)
+{
+    uint16_t len = strlen(text);
+    USART_WriteBlocking(dev,(const uint8_t *)text,len);
+    USART_WriteBlocking(dev,(const uint8_t *)"\r\n",2);
+}
+#endif
+
 #elif defined (__NUECLIPSE)
 static void Uart_write (UART_T* dev, const uint8_t* data, uint32_t timeout)
 {
@@ -734,7 +782,11 @@ void WCDLI_ckeck (void)
 void WCDLI_init (Uart_DeviceHandle dev)
 #else
 #if defined (__MCUXPRESSO)
+#if defined (__MCUXPRESSO_UART)
 void WCDLI_init (UART_Type* dev)
+#elif defined (__MCUXPRESSO_USART)
+void WCDLI_init (USART_Type* dev)
+#endif
 #elif defined (__NUECLIPSE)
 void WCDLI_init (UART_T* dev)
 #endif
@@ -744,6 +796,8 @@ void WCDLI_init (UART_T* dev)
     {
 #if defined (LIBOHIBOARD_VERSION)
         ohiassert(0);
+#else
+        assert(0);
 #endif
         return;
     }

@@ -70,7 +70,13 @@ extern "C"
 
 #if !defined (LIBOHIBOARD_VERSION)
 #if defined (__MCUXPRESSO)
+#if defined (__MCUXPRESSO_UART)
 #include "fsl_uart.h"
+#elif defined (__MCUXPRESSO_USART)
+#include "fsl_usart.h"
+#else
+#error "[ERROR] You must define the correct serial peripheral!"
+#endif
 #elif defined (__NUECLIPSE)
 #include "uart.h"
 #endif
@@ -102,7 +108,11 @@ typedef union _Utility_Version_t
 void WCDLI_init (Uart_DeviceHandle dev);
 #else
 #if defined (__MCUXPRESSO)
+#if defined (__MCUXPRESSO_UART)
 void WCDLI_init (UART_Type* dev);
+#elif defined (__MCUXPRESSO_USART)
+void WCDLI_init (USART_Type* dev);
+#endif
 #elif defined (__NUECLIPSE)
 void WCDLI_init (UART_T* dev);
 #else
@@ -112,7 +122,11 @@ void WCDLI_init (UART_T* dev);
 
 #if !defined (LIBOHIBOARD_VERSION)
 #if defined (__MCUXPRESSO)
+#if defined (__MCUXPRESSO_UART)
 void WCDLI_callbackRx (UART_Type* base, void* obj);
+#elif defined (__MCUXPRESSO_USART)
+void WCDLI_callbackRx (USART_Type* base, void* obj);
+#endif
 #elif defined (__NUECLIPSE)
 void WCDLI_callbackRx (UART_T* base, void* obj);
 #else
