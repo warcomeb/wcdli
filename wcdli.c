@@ -256,11 +256,12 @@ void WCDLI_callbackRx (USART_Type* base, void* obj)
     uint8_t c;
     // put the new received byte in the buffer
     uint32_t UartFlags = USART_GetStatusFlags(base);
-    if ((kUSART_RxFifoFullFlag) & UartFlags)
+    if ((kUSART_RxFifoNotEmptyFlag) & UartFlags)
     {
         c = USART_ReadByte(base);
         UtilityBuffer_push(&mBufferDescriptor,c);
     }
+    //USART_ClearStatusFlags(base,kUSART_AllClearFlags);
 }
 #elif defined (__NUECLIPSE)
 // FIXME
